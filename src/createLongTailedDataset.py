@@ -50,6 +50,7 @@ def copy_number_of_labelled_image(label,number,outputFolder):
             if len(parts) == 3 and int(parts[-1])==1:
                 count += 1
                 src_file = "../dataset_org/VOCtrainval_11-May-2012/VOCdevkit/VOC2012/JPEGImages/{}.jpg".format(parts[0])
+                print("{} - {}".format(parts[0],label))
                 shutil.copy(src_file,outputFolder)
                 if count == number:
                     return
