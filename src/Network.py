@@ -24,7 +24,6 @@ class SubNet(nn.Module):
         self.lastStage = nn.Sequential(*layers[7:9])
         self.fullyConnected = nn.Linear(2048, 20)
         
-
     def forward(self,x):
         x = self.lastStage(x)
         x = x.view(-1, self.num_flat_features(x))
@@ -37,7 +36,6 @@ class SubNet(nn.Module):
         for s in size:
             num_features *= s
         return num_features
-
 
 class Net(nn.Module):
     def __init__(self):    
@@ -62,28 +60,35 @@ class Net(nn.Module):
             num_features *= s
         return num_features
 
-
-
 if torch.cuda.is_available():  
   dev = "cuda:0" 
 else:  
   dev = "cpu"  
-
 #dev = "cpu"  
 device = torch.device(dev)  
 
-input = torch.randn(1, 3, 224, 224).to(device)  # nSamples x nChannels x Height x Width
-print("input.shape",input.shape)
-
 net = Net().to(device)
 print(net)
-#params= list(net.parameters())
-#print(params[0].size())
+input = torch.randn(1, 3, 224, 224).to(device)  # nSamples x nChannels x Height x Width
+print("input.shape",input.shape)
 out = net(input)
 print("out",out)
 
-#net.zero_grad()
-#out.backward(torch.randn(1, 10))
+################# Test Loss ##########################
+Lcls = nn.BCEWithLogitsLoss()
+Lcon = nn.MSELoss()
+
+xU = torch.randn(1, 3, 224, 224).to(device)  # nSamples x nChannels x Height x Width
+xR = torch.randn(1, 3, 224, 224).to(device)  # nSamples x nChannels x Height x Width
+yU = torch.randn(1, 20).to(device)
+yR = torch.randn(1, 20).to(device)
+_lambda = 0.1
+
+u , uHat = net(xU)
+rHat , r = net(xR)
+loss = Lcls(u,yU) + Lcls(r,yR) + _lambda * ( Lcon(u,uHat) + Lcon(r,rHat))
+loss.backward()
+
 '''
 resnet50 = models.resnet50(pretrained=True).to(device)
 print(resnet50)
