@@ -60,58 +60,60 @@ class Net(nn.Module):
             num_features *= s
         return num_features
 
-if torch.cuda.is_available():  
-  dev = "cuda:0" 
-else:  
-  dev = "cpu"  
-#dev = "cpu"  
-device = torch.device(dev)  
+if __name__=="__main__":
 
-net = Net().to(device)
-print(net)
-input = torch.randn(1, 3, 224, 224).to(device)  # nSamples x nChannels x Height x Width
-print("input.shape",input.shape)
-out = net(input)
-print("out",out)
+    if torch.cuda.is_available():  
+        dev = "cuda:0" 
+    else:  
+        dev = "cpu"  
+    #dev = "cpu"  
+    device = torch.device(dev)  
 
-################# Test Loss ##########################
-Lcls = nn.BCEWithLogitsLoss()
-Lcon = nn.MSELoss()
+    net = Net().to(device)
+    print(net)
+    input = torch.randn(1, 3, 224, 224).to(device)  # nSamples x nChannels x Height x Width
+    print("input.shape",input.shape)
+    out = net(input)
+    print("out",out)
 
-xU = torch.randn(1, 3, 224, 224).to(device)  # nSamples x nChannels x Height x Width
-xR = torch.randn(1, 3, 224, 224).to(device)  # nSamples x nChannels x Height x Width
-yU = torch.randn(1, 20).to(device)
-yR = torch.randn(1, 20).to(device)
-_lambda = 0.1
+    ################# Test Loss ##########################
+    Lcls = nn.BCEWithLogitsLoss()
+    Lcon = nn.MSELoss()
 
-u , uHat = net(xU)
-rHat , r = net(xR)
-loss = Lcls(u,yU) + Lcls(r,yR) + _lambda * ( Lcon(u,uHat) + Lcon(r,rHat))
-loss.backward()
+    xU = torch.randn(1, 3, 224, 224).to(device)  # nSamples x nChannels x Height x Width
+    xR = torch.randn(1, 3, 224, 224).to(device)  # nSamples x nChannels x Height x Width
+    yU = torch.randn(1, 20).to(device)
+    yR = torch.randn(1, 20).to(device)
+    _lambda = 0.1
 
-'''
-resnet50 = models.resnet50(pretrained=True).to(device)
-print(resnet50)
-out = resnet50(input)
+    u , uHat = net(xU)
+    rHat , r = net(xR)
+    loss = Lcls(u,yU) + Lcls(r,yR) + _lambda * ( Lcon(u,uHat) + Lcon(r,rHat))
+    loss.backward()
 
-#GPU-WARM-UP
-for _ in range(10):
-    _ = resnet50(input)
+    '''
+    resnet50 = models.resnet50(pretrained=True).to(device)
+    print(resnet50)
+    out = resnet50(input)
 
-starter, ender = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
-repetitions = 1
-timings=np.zeros((repetitions,1))
-with torch.no_grad():
-    for rep in range(repetitions):
-        starter.record()
+    #GPU-WARM-UP
+    for _ in range(10):
         _ = resnet50(input)
-        ender.record()
-        # WAIT FOR GPU SYNC
-        torch.cuda.synchronize()
-        curr_time = starter.elapsed_time(ender)
-        timings[rep] = curr_time
-mean_syn = np.sum(timings) / repetitions
-std_syn = np.std(timings)
-print(mean_syn)
-'''
-print("END")
+
+    starter, ender = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
+    repetitions = 1
+    timings=np.zeros((repetitions,1))
+    with torch.no_grad():
+        for rep in range(repetitions):
+            starter.record()
+            _ = resnet50(input)
+            ender.record()
+            # WAIT FOR GPU SYNC
+            torch.cuda.synchronize()
+            curr_time = starter.elapsed_time(ender)
+            timings[rep] = curr_time
+    mean_syn = np.sum(timings) / repetitions
+    std_syn = np.std(timings)
+    print(mean_syn)
+    '''
+    print("END")

@@ -1,2 +1,3 @@
 dataset_org/*
 dataset_voc_lt/*
+*.pyc

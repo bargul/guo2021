@@ -1,8 +1,8 @@
 from __future__ import division
-import math
+# import math
 import torch
 import numpy as np
-from mmcv.runner import get_dist_info
+# from mmcv.runner import get_dist_info
 from torch.utils.data import Sampler
 from torch.utils.data import DistributedSampler as _DistributedSampler
 import random
