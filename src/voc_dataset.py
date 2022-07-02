@@ -1,7 +1,7 @@
 # from dataloader.trsfrms import must_transform
 from torch.utils.data import Dataset
 # from torchvision.datasets import ImageFolder
-#from torchvision import transforms as trs
+from torchvision import transforms
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
@@ -57,7 +57,8 @@ class VOC(Dataset):
 
 if __name__ == '__main__':
     img_mean = np.array([104, 117, 128]).reshape(1, 1, 3)
-    myvoc = VOC(root="C:/aal/lrn/METU/CENG502/proj/r1/guo2021/dataset_voc_lt")
+    transform_train = transforms.Compose([transforms.ToPILImage(), transforms.ToTensor(), transforms.Resize([224,224])])
+    myvoc = VOC(root="C:/aal/lrn/METU/CENG502/proj/r1/guo2021/dataset_voc_lt", imgtransform = transform_train)
     img, lbl = myvoc[1]
     plt.imshow(img)
     img = Image.fromarray(img)

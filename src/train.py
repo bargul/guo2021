@@ -7,6 +7,7 @@ from torch.utils.data import Dataset,DataLoader
 from torchvision import datasets
 from torchvision.transforms import ToTensor
 import matplotlib.pyplot as plt
+from torchvision import transforms
 
 debugMode = False
 
@@ -18,7 +19,8 @@ else:
 device = torch.device(dev)  
 
 # Dataset
-training_data = VOC(root="./dataset_voc_lt")
+transform_train = transforms.Compose([transforms.ToPILImage(), transforms.ToTensor(), transforms.Resize([224,224])])
+training_data = VOC(root="./dataset_voc_lt", imgtransform=transform_train)
 
 labels_map = {
     0:"aeroplane",
