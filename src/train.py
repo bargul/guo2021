@@ -2,6 +2,7 @@ from configuration import *
 from voc_dataset import *
 from ClassAwareSampler import *
 from Network import *
+from apmeter import *
 
 import torch
 from torch.utils.data import Dataset, DataLoader, random_split
@@ -12,6 +13,8 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm 
 from copy import deepcopy
 import time
+
+from sklearn.metrics import average_precision_score, accuracy_score, label_ranking_average_precision_score, precision_score
 
 
 # Dataset
@@ -105,24 +108,35 @@ def runOnDataset(dataloader,net,name,colour="blue"):
   recall = 0
   F1scr = 0
   net.eval()
+  pred_raw_all = np.ndarray([0,len(labels_map)])
+  pred_all = np.ndarray([0,len(labels_map)])
+  y_all = np.ndarray([0,len(labels_map)])
   for i in tqdm(range(iterations), desc=name, colour=colour):
     counter+= 1
     x, y = next(iter(dataloader))
+    y_all = np.concatenate((y_all, y.cpu().detach().numpy()))
+
     uniform , resampled = net(x)
 
-    inference_result = ( uniform + resampled )/ 2
-    inference_result = (inference_result>threshold).float()
+    prediction_raw = ( uniform + resampled )/ 2
+    pred_raw_all = np.concatenate((pred_raw_all, prediction_raw.cpu().detach().numpy()))
 
-    tmp_precision, tmp_recall , tmp_f1 = F1_score(y, inference_result)
+    prediction = (prediction_raw>threshold).float()
+    pred_all = np.concatenate((pred_all, prediction.cpu().detach().numpy()))
+
+    tmp_precision, tmp_recall , tmp_f1 = F1_score(y, prediction)
     precision += tmp_precision.item()
     recall += tmp_recall.item()
     F1scr += tmp_f1.item()
+    
   precision /= counter
   recall /= counter
   F1scr /= counter
-  return precision,recall,F1scr    
 
+  return precision, recall, F1scr, pred_raw_all, pred_all, y_all
 
+apm_val = APMeter()
+apm_test = APMeter()
 
 total_iterations = int(len(train_set) / batch_size_)
 total_iterations_val = int(len(val_set) / batch_size_)
@@ -134,7 +148,6 @@ while patience < patience_level:
   epoch_counter += 1
   avg_loss_iters = 0
   ##########  Train #############
- 
   for i in tqdm(range(total_iterations), desc="train", colour='green'):
       net.train()
       batch_counter += 1
@@ -161,16 +174,26 @@ while patience < patience_level:
 
       if batch_counter % 20 == 0:
         ##########  Validation #############
-        precision_val,recall_val,F1scr_val = runOnDataset(uniform_dataloader_val,net,"val")          
+        precision_val,recall_val,F1scr_val, pred_raw_all_val, pred_all_val, y_all_val = runOnDataset(uniform_dataloader_val,net,"val")          
         writer.add_scalar("Validation/precision", precision_val, batch_counter)
         writer.add_scalar("Validation/recall", recall_val, batch_counter)
         writer.add_scalar("Validation/F1scr", F1scr_val, batch_counter)
-
+        #mAP_raw_val, APs_raw_val = eval_map(pred_raw_all_val, y_all_val, avg="samples")
+        #mAP_val, APs_val = eval_map(pred_all_val, y_all_val, avg="samples")
+        #aa1 = average_precision_score(pred_all_val.astype(bool), np.asarray(y_all_val).astype(bool), average="samples")
+        apm_val.add(torch.from_numpy(pred_all_val), torch.from_numpy(y_all_val))
+        mAP_val_cls = apm_val.value().cpu().detach().numpy()
+        mAP_val = mAP_val_cls.mean()
         ##########  Test #############
-        precision_test,recall_test,F1scr_test = runOnDataset(testLoader,net,"test","red")          
+        precision_test,recall_test,F1scr_test, pred_raw_all_test, pred_all_test, y_all_test = runOnDataset(testLoader,net,"test","red")          
         writer.add_scalar("Test/precision", precision_test, batch_counter)
         writer.add_scalar("Test/recall", recall_test, batch_counter)
         writer.add_scalar("Test/F1scr", F1scr_test, batch_counter)
+        #mAP_raw_test, APs_raw_test = eval_map(pred_raw_all_test, y_all_test, avg="samples")
+        #mAP_test, APs_test = eval_map(pred_all_test, y_all_test, avg="samples")
+        apm_test.add(torch.from_numpy(pred_all_test), torch.from_numpy(y_all_test))
+        mAP_test_cls = apm_val.value().cpu().detach().numpy()
+        mAP_test = mAP_test_cls.mean()
 
 
   avg_loss_iters = avg_loss_iters / total_iterations
