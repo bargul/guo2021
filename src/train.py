@@ -6,7 +6,7 @@ import torch
 from torch.utils.data import Dataset,DataLoader
 from torchvision import datasets
 from torchvision.transforms import ToTensor
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from torchvision import transforms
 
 debugMode = False
@@ -21,6 +21,7 @@ device = torch.device(dev)
 # Dataset
 transform_train = transforms.Compose([transforms.ToPILImage(), transforms.ToTensor(), transforms.Resize([224,224])])
 training_data = VOC(root="../dataset_voc_lt", imgtransform=transform_train)
+
 
 labels_map = {
     0:"aeroplane",
@@ -58,8 +59,8 @@ if debugMode:
         plt.imshow(img.squeeze(), cmap="gray")
     plt.show()
 
-epoch = 10
-batch_size_ = 64
+epoch = 100000
+batch_size_ = 32
 lr_ = 0.01
 momentum_ = 0.9
 weight_decay_ = 0.0001
@@ -79,21 +80,20 @@ Lcon = nn.MSELoss()
 
 net.train()
 for i in range(epoch):
+    print("Epoch:",i)
     optimizer.zero_grad()
     xR, yR = next(iter(rebalanced_dataloader))
     xU, yU = next(iter(uniform_dataloader))
-
     u , uHat = net(xU)
     rHat , r = net(xR)
-    Lcls_u = Lcls(u,yU)
-    Lcls_r = Lcls(r,yR)
-    Lcon_u = Lcon(u,uHat)
-    Lcon_r = Lcon(r,rHat)
-    loss = Lcls_u + Lcls_r + lambda_ * (Lcon_u + Lcon_r)
-
+    loss = Lcls(u,yU) + Lcls(r,yR) + lambda_ * ( Lcon(u,uHat) + Lcon(r,rHat))
     loss.backward()
     optimizer.step()
-    print("epoch passed")
+    if i % 100 == 0:
+      name = "weights_{}.weights".format(i)
+      torch.save(net, name)
+      print("saved",name)
+
 
 
 print("End")
