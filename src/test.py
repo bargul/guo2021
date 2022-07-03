@@ -1,3 +1,4 @@
+from configuration import *
 from voc_dataset import *
 from ClassAwareSampler import *
 from Network import *
@@ -15,14 +16,11 @@ device = torch.device(dev)
 
 # Dataset
 transform_train = transforms.Compose([transforms.ToPILImage(), transforms.ToTensor(), transforms.Resize([224,224])])
-test_data = VOC(root="./dataset_voc_test", imgtransform=transform_train)
-batch_size_ = 32
-testLoader = DataLoader(test_data, batch_size=batch_size_, shuffle=False)
-savedModel = "src/weights_2000.weights"
-net = torch.load(savedModel)
+test_data = VOC(root=test_dataset_output_path, imgtransform=transform_train)
+testLoader = DataLoader(test_data, batch_size=test_batch_size, shuffle=False)
+net = torch.load(test_weight_path)
 net = net.to(device)
 net.eval()
-  
   
 for testData,testLabel in testLoader:
     u , r = net(testData)

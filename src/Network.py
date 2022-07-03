@@ -1,20 +1,6 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torchvision import models
-import numpy as np
-import time
-
-debugMode = False
-
-if debugMode:
-    resnet50 = models.resnet50(pretrained=True)
-    # .children(), .modules() difference: https://discuss.pytorch.org/t/module-children-vs-module-modules/4551/3
-    children = resnet50.children()
-    layers = list(children)
-    layer5 = list(layers[5].children())
-    layer6 = list(layers[6].children())
-    layer7 = list(layers[7].children())
 
 class SubNet(nn.Module):
     def __init__(self):    
@@ -31,7 +17,7 @@ class SubNet(nn.Module):
         return x
 
     def num_flat_features(self, x):
-        size = x.size()[1:]  # all dimensions except the batch dimension (see below)
+        size = x.size()[1:] 
         num_features = 1
         for s in size:
             num_features *= s
@@ -41,7 +27,6 @@ class Net(nn.Module):
     def __init__(self):    
         super(Net,self).__init__()
         resnet50 = models.resnet50(pretrained=True)
-        # .children(), .modules() difference: https://discuss.pytorch.org/t/module-children-vs-module-modules/4551/3
         layers = list(resnet50.children())
         self.backbone = nn.Sequential(*layers[:7])
         self.subnetU = SubNet()
@@ -54,7 +39,7 @@ class Net(nn.Module):
         return u,r    
             
     def num_flat_features(self, x):
-        size = x.size()[1:]  # all dimensions except the batch dimension (see below)
+        size = x.size()[1:] 
         num_features = 1
         for s in size:
             num_features *= s
@@ -66,7 +51,6 @@ if __name__=="__main__":
         dev = "cuda:0" 
     else:  
         dev = "cpu"  
-    #dev = "cpu"  
     device = torch.device(dev)  
 
     net = Net().to(device)
@@ -92,6 +76,8 @@ if __name__=="__main__":
     loss.backward()
 
     '''
+    ################# Test Speed ##########################
+
     resnet50 = models.resnet50(pretrained=True).to(device)
     print(resnet50)
     out = resnet50(input)
@@ -116,4 +102,3 @@ if __name__=="__main__":
     std_syn = np.std(timings)
     print(mean_syn)
     '''
-    print("END")

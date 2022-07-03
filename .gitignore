@@ -1,3 +1,4 @@
+.vscode/*
 dataset_org/*
 dataset_voc_lt/*
 dataset_voc_test/*
