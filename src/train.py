@@ -82,15 +82,19 @@ for i in range(epoch):
     optimizer.zero_grad()
     xR, yR = next(iter(rebalanced_dataloader))
     xU, yU = next(iter(uniform_dataloader))
-    print("dummy")
 
-    '''
     u , uHat = net(xU)
     rHat , r = net(xR)
-    loss = Lcls(u,yU) + Lcls(r,yR) + lambda_ * ( Lcon(u,uHat) + Lcon(r,rHat))
+    Lcls_u = Lcls(u,yU)
+    Lcls_r = Lcls(r,yR)
+    Lcon_u = Lcon(u,uHat)
+    Lcon_r = Lcon(r,rHat)
+    loss = Lcls_u + Lcls_r + lambda_ * (Lcon_u + Lcon_r)
+
     loss.backward()
     optimizer.step()
-    '''
+    print("epoch passed")
+
 
 print("End")
 
