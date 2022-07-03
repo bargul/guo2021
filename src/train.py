@@ -21,6 +21,7 @@ training_data = VOC(root=lt_dataset_output_path, imgtransform=transform_train)
 test_data = VOC(root=test_dataset_output_path, imgtransform=transform_train)
 testLoader = DataLoader(test_data, batch_size=test_batch_size, shuffle=False)
 
+
 def splitDataset(training_data, validation_set_ratio):
   train_count = int(len(training_data)*(1-validation_set_ratio))
   val_count = len(training_data) - train_count
@@ -98,14 +99,14 @@ def calcLoss(uniform_dataloader, rebalanced_dataloader):
     loss +=lambda_ * ( Lcon(u,uHat) + Lcon(r,rHat))
   return loss, u , r, uHat, rHat, xU, yU, xR, yR
 
-def runOnDataset(dataloader,net,name,colour="blue"):
+def runOnDataset(dataloader,name,colour="blue"):
+  global net
   iterations = int(len(dataloader) / batch_size_)
   counter = 0
   precision = 0
   recall = 0
   F1scr = 0
-  net.eval()
-  for i in tqdm(range(iterations), desc=name, colour=colour):
+  for i in tqdm(range(len(dataloader)), desc=name, colour=colour):
     counter+= 1
     x, y = next(iter(dataloader))
     uniform , resampled = net(x)
@@ -123,9 +124,6 @@ def runOnDataset(dataloader,net,name,colour="blue"):
   return precision,recall,F1scr    
 
 
-
-total_iterations = int(len(train_set) / batch_size_)
-total_iterations_val = int(len(val_set) / batch_size_)
 patience = 0
 epoch_counter = 0 
 batch_counter = 0
@@ -134,15 +132,14 @@ while patience < patience_level:
   epoch_counter += 1
   avg_loss_iters = 0
   ##########  Train #############
- 
-  for i in tqdm(range(total_iterations), desc="train", colour='green'):
-      net.train()
+  net.train()
+  for i in tqdm(range(len(uniform_dataloader)), desc="train", colour='green'):
       batch_counter += 1
       optimizer.zero_grad()
       loss, u, r, uHat, rHat, xU, yU, xR, yR = calcLoss(uniform_dataloader, rebalanced_dataloader)
-      avg_loss_iters += loss.item()
       loss.backward()
       optimizer.step()
+      avg_loss_iters += loss.item()
       writer.add_scalar("Training/loss", loss, batch_counter)
 
       uniform_result = (u>threshold).float()
@@ -159,22 +156,21 @@ while patience < patience_level:
       writer.add_scalar("Training/resampled/recall", resampled_recall, batch_counter)
       writer.add_scalar("Training/resampled/F1scr", resampled_F1scr, batch_counter)
 
-      if batch_counter % 20 == 0:
-        ##########  Validation #############
-        precision_val,recall_val,F1scr_val = runOnDataset(uniform_dataloader_val,net,"val")          
-        writer.add_scalar("Validation/precision", precision_val, batch_counter)
-        writer.add_scalar("Validation/recall", recall_val, batch_counter)
-        writer.add_scalar("Validation/F1scr", F1scr_val, batch_counter)
-
-        ##########  Test #############
-        precision_test,recall_test,F1scr_test = runOnDataset(testLoader,net,"test","red")          
-        writer.add_scalar("Test/precision", precision_test, batch_counter)
-        writer.add_scalar("Test/recall", recall_test, batch_counter)
-        writer.add_scalar("Test/F1scr", F1scr_test, batch_counter)
-
-
-  avg_loss_iters = avg_loss_iters / total_iterations
-  writer.add_scalar("Training/avg_loss", avg_loss_iters, epoch_counter)
+      #if batch_counter % 60 == 0:
+        
+  ##########  Validation #############
+  net.eval()
+  precision_val,recall_val,F1scr_val = runOnDataset(uniform_dataloader_val,"val")          
+  writer.add_scalar("Validation/precision", precision_val, batch_counter)
+  writer.add_scalar("Validation/recall", recall_val, batch_counter)
+  writer.add_scalar("Validation/F1scr", F1scr_val, batch_counter)
+  
+  ##########  Test #############
+  precision_test,recall_test,F1scr_test = runOnDataset(testLoader,"test","red")          
+  writer.add_scalar("Test/precision", precision_test, batch_counter)
+  writer.add_scalar("Test/recall", recall_test, batch_counter)
+  writer.add_scalar("Test/F1scr", F1scr_test, batch_counter)
+      
    
   '''
   if F1scr_val_new > F1scr_val:
