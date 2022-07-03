@@ -7,7 +7,7 @@ from PIL import Image
 import numpy as np
 import os
 import torch
-
+from configuration import *
 # reference: https://github.com/andrewssobral/deep-learning-pytorch/blob/master/segmentation/utils/dataset.py
 
 EXTENSIONS = ['.jpg', '.png']
@@ -41,10 +41,6 @@ class VOC(Dataset):
         self.filenames.sort()
 
         self.imgtransform = imgtransform
-        if torch.cuda.is_available():  
-            dev = "cuda:0" 
-        else:  
-            dev = "cpu"  
         self.device = torch.device(dev)  
 
 

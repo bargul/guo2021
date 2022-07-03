@@ -1,5 +1,5 @@
 from configuration import *
-from voc_dataset import *
+from VocDataset import *
 from ClassAwareSampler import *
 from Network import *
 

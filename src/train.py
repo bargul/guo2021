@@ -1,5 +1,5 @@
 from configuration import *
-from voc_dataset import *
+from VocDataset import *
 from ClassAwareSampler import *
 from Network import *
 
@@ -84,21 +84,6 @@ def F1_score(prob, label):
     F1scr = 2 * precision * recall / (precision + recall + epsilon)
     return precision, recall, F1scr
 
-def calcLoss(uniform_dataloader, rebalanced_dataloader):
-  xU, yU = next(iter(uniform_dataloader))
-  xR, yR = next(iter(rebalanced_dataloader))
-
-  loss = torch.tensor([0.0], device = dev)
-  if uniform_branch_active:
-    u , uHat = net(xU)
-    loss += Lcls(u,yU)
-  if resampled_branch_active:
-    rHat , r = net(xR)
-    loss += Lcls(r,yR)
-  if uniform_branch_active and resampled_branch_active and logit_consistency:
-    loss +=lambda_ * ( Lcon(u,uHat) + Lcon(r,rHat))
-  return loss, u , r, uHat, rHat, xU, yU, xR, yR
-
 def runOnDataset(dataloader,name,colour="blue"):
   global net
   iterations = int(len(dataloader) / batch_size_)
@@ -136,41 +121,53 @@ while patience < patience_level:
   for i in tqdm(range(len(uniform_dataloader)), desc="train", colour='green'):
       batch_counter += 1
       optimizer.zero_grad()
-      loss, u, r, uHat, rHat, xU, yU, xR, yR = calcLoss(uniform_dataloader, rebalanced_dataloader)
+
+      xU, yU = next(iter(uniform_dataloader))
+      xR, yR = next(iter(rebalanced_dataloader))
+
+      loss = torch.tensor([0.0], device = dev)
+      if uniform_branch_active:
+        u , uHat = net(xU)
+        loss += Lcls(u,yU)
+      if resampled_branch_active:
+        rHat , r = net(xR)
+        loss += Lcls(r,yR)
+      if uniform_branch_active and resampled_branch_active and logit_consistency:
+        loss +=lambda_ * ( Lcon(u,uHat) + Lcon(r,rHat))
+
+      avg_loss_iters += loss.item()
       loss.backward()
       optimizer.step()
       avg_loss_iters += loss.item()
       writer.add_scalar("Training/loss", loss, batch_counter)
 
-      uniform_result = (u>threshold).float()
-      uniform_precision, uniform_recall, uniform_F1scr = F1_score(yU, uniform_result)
+      if uniform_branch_active:
+        uniform_result = (u>threshold).float()
+        uniform_precision, uniform_recall, uniform_F1scr = F1_score(yU, uniform_result)
+        writer.add_scalar("Training/uniform/precision", uniform_precision, batch_counter)
+        writer.add_scalar("Training/uniform/recall", uniform_recall, batch_counter)
+        writer.add_scalar("Training/uniform/F1scr", uniform_F1scr, batch_counter)
 
-      resampled_result = (r>threshold).float()
-      resampled_precision, resampled_recall, resampled_F1scr = F1_score(yR, resampled_result)
+      if resampled_branch_active:
+        resampled_result = (r>threshold).float()
+        resampled_precision, resampled_recall, resampled_F1scr = F1_score(yR, resampled_result)
+        writer.add_scalar("Training/resampled/precision", resampled_precision, batch_counter)
+        writer.add_scalar("Training/resampled/recall", resampled_recall, batch_counter)
+        writer.add_scalar("Training/resampled/F1scr", resampled_F1scr, batch_counter)
 
-      writer.add_scalar("Training/uniform/precision", uniform_precision, batch_counter)
-      writer.add_scalar("Training/uniform/recall", uniform_recall, batch_counter)
-      writer.add_scalar("Training/uniform/F1scr", uniform_F1scr, batch_counter)
+      if batch_counter % 40 == 0:
+        ##########  Validation #############
+        precision_val,recall_val,F1scr_val = runOnDataset(uniform_dataloader_val,"val")          
+        writer.add_scalar("Validation/precision", precision_val, batch_counter)
+        writer.add_scalar("Validation/recall", recall_val, batch_counter)
+        writer.add_scalar("Validation/F1scr", F1scr_val, batch_counter)
 
-      writer.add_scalar("Training/resampled/precision", resampled_precision, batch_counter)
-      writer.add_scalar("Training/resampled/recall", resampled_recall, batch_counter)
-      writer.add_scalar("Training/resampled/F1scr", resampled_F1scr, batch_counter)
+        ##########  Test #############
+        precision_test,recall_test,F1scr_test = runOnDataset(testLoader,"test","red")          
+        writer.add_scalar("Test/precision", precision_test, batch_counter)
+        writer.add_scalar("Test/recall", recall_test, batch_counter)
+        writer.add_scalar("Test/F1scr", F1scr_test, batch_counter)
 
-      #if batch_counter % 60 == 0:
-        
-  ##########  Validation #############
-  net.eval()
-  precision_val,recall_val,F1scr_val = runOnDataset(uniform_dataloader_val,"val")          
-  writer.add_scalar("Validation/precision", precision_val, batch_counter)
-  writer.add_scalar("Validation/recall", recall_val, batch_counter)
-  writer.add_scalar("Validation/F1scr", F1scr_val, batch_counter)
-  
-  ##########  Test #############
-  precision_test,recall_test,F1scr_test = runOnDataset(testLoader,"test","red")          
-  writer.add_scalar("Test/precision", precision_test, batch_counter)
-  writer.add_scalar("Test/recall", recall_test, batch_counter)
-  writer.add_scalar("Test/F1scr", F1scr_test, batch_counter)
-      
    
   '''
   if F1scr_val_new > F1scr_val:
