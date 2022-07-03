@@ -12,6 +12,13 @@ debug_mode = False
 
 seed = 123 # datetime.now()
 
+# Initials
+if torch.cuda.is_available():  
+  devtype = "cuda:0" 
+else:  
+  devtype = "cpu"  
+dev = torch.device(devtype) 
+
 iteration = 100000
 test_batch_size = 32
 batch_size_ = 8
