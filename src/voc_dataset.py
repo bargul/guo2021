@@ -55,7 +55,9 @@ class VOC(Dataset):
 
         with open(get_full_path(self.labels_root, filename, '.txt')) as f:
             lines = f.readlines()
-            label = [int(currentline[0]) for currentline in lines]
+            label = np.array([int(currentline[0]) for currentline in lines])
+            label = torch.Tensor(label).to(self.device)
+
         if self.imgtransform is not None:
             image = self.imgtransform(image)
             image = image.to(self.device)
