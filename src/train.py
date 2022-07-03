@@ -48,7 +48,23 @@ Lcon = nn.MSELoss()
 
 total_iterations = int(len(training_data) / batch_size_)
 
+# https://discuss.pytorch.org/t/is-there-any-nice-pre-defined-function-to-calculate-precision-recall-and-f1-score-for-multi-class-multilabel-classification/103353
+def F1_score(prob, label):
+    prob = prob.bool()
+    label = label.bool()
+    epsilon = 1e-7
+    TP = (prob & label).sum().float()
+    TN = ((~prob) & (~label)).sum().float()
+    FP = (prob & (~label)).sum().float()
+    FN = ((~prob) & label).sum().float()
+    accuracy = (TP+TN)/(TP+TN+FP+FN)
+    precision = torch.mean(TP / (TP + FP + epsilon))
+    recall = torch.mean(TP / (TP + FN + epsilon))
+    print("Acc:{} Precision:{} Recall:{}".format(accuracy,precision,recall))
+    F2 = 2 * precision * recall / (precision + recall + epsilon)
+    return precision, recall, F2
 
+threshold = torch.tensor([0.5]).to(dev)
 net.train()
 for i in tqdm(range(total_iterations), desc="i", colour='green'):
     print("total_iterations: {}, i: {}".format(total_iterations, i))
@@ -68,7 +84,12 @@ for i in tqdm(range(total_iterations), desc="i", colour='green'):
     
     loss.backward()
     optimizer.step()
+    
+    rR = (r>threshold).float()*1
+    F1_score(yR, rR)
+    
     if i % 100 == save_weight_interval:
+      
       name = "weights_{}.weights".format(i)
       torch.save(net, name)
       print("saved",name)
