@@ -67,6 +67,9 @@ class VOC(Dataset):
     def __len__(self):
         return len(self.filenames)
 
+    def reduceByIndexing(self, indexes):
+        self.filenames = [self.filenames[i] for i in indexes]
+
     def get_cat2imgs(self):
             """Get a dict with class as key and img_ids as values, which will be
             used in :class:`ClassAwareSampler`.
