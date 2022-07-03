@@ -1,3 +1,6 @@
+from datetime import datetime
+import torch 
+
 train_dataset_path = "./dataset_org/VOCtrainval_11-May-2012/VOCdevkit/VOC2012/"
 lt_dataset_output_path = "./dataset_voc_lt/"
 
@@ -7,14 +10,27 @@ test_weight_path = "src/weight/weights_22000.weights"
 
 debug_mode = False
 
+seed = 123 # datetime.now()
+
+# Initials
+if torch.cuda.is_available():  
+  devtype = "cuda:0" 
+else:  
+  devtype = "cpu"  
+dev = torch.device(devtype) 
+
 iteration = 100000
 test_batch_size = 32
 batch_size_ = 8
 lr_ = 0.01
+validation_set_ratio = 0.1
 momentum_ = 0.9
 weight_decay_ = 0.0001
 lambda_ = 0.1
 save_weight_interval = 100
+patience_level = 8
+threshold = torch.tensor([0.5]).to(dev)
+tnsrbrd_dir = "./runs"
 
 uniform_branch_active = True 
 resampled_branch_active = True 

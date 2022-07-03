@@ -4,3 +4,4 @@ dataset_voc_lt/*
 dataset_voc_test/*
 *.pyc
 *weights
+events.out.*
