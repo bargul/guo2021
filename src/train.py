@@ -10,18 +10,29 @@ from torchvision import transforms
 from torch.utils.tensorboard import SummaryWriter
 
 from tqdm import tqdm 
+from copy import deepcopy
+
 
 # Dataset
 transform_train = transforms.Compose([transforms.ToPILImage(), transforms.ToTensor(), transforms.Resize([224,224])])
 training_data = VOC(root=lt_dataset_output_path, imgtransform=transform_train)
 
-train_count = int(len(training_data)*(1-validation_set_ratio))
-val_count = len(training_data) - train_count
-train_set, val_set = random_split(training_data, [train_count, val_count], generator=torch.Generator().manual_seed(seed))
-train_set = train_set.dataset
-val_set = val_set.dataset
+def splitDataset(training_data, validation_set_ratio):
+  train_count = int(len(training_data)*(1-validation_set_ratio))
+  val_count = len(training_data) - train_count
+  train_set0, val_set0 = random_split(training_data, [train_count, val_count], generator=torch.Generator().manual_seed(seed))
+  train_idxs = train_set0.indices
+  train_set = deepcopy(training_data)
+  train_set.reduceByIndexing(train_idxs)
+  val_idxs = val_set0.indices
+  val_set = deepcopy(training_data)
+  val_set.reduceByIndexing(val_idxs)
+  return train_set, val_set
 
-
+train_set, val_set = splitDataset(training_data, validation_set_ratio)
+if False: # quick test
+  train_set, val_set = splitDataset(val_set, validation_set_ratio)
+  
 if debug_mode:
     figure = plt.figure(figsize=(8, 8))
     cols, rows = 4, 5

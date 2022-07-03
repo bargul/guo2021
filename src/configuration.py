@@ -20,7 +20,7 @@ else:
 dev = torch.device(devtype) 
 
 iteration = 100000
-test_batch_size = 32
+test_batch_size = 8
 batch_size_ = 8
 lr_ = 0.01
 validation_set_ratio = 0.1
