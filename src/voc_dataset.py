@@ -6,6 +6,7 @@ from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import torch
 
 # reference: https://github.com/andrewssobral/deep-learning-pytorch/blob/master/segmentation/utils/dataset.py
 
@@ -35,19 +36,24 @@ class VOC(Dataset):
         self.filenames.sort()
 
         self.imgtransform = imgtransform
+        if torch.cuda.is_available():  
+            dev = "cuda:0" 
+        else:  
+            dev = "cpu"  
+        self.device = torch.device(dev)  
+
 
     def __getitem__(self, index):
         filename = self.filenames[index]
 
         image = np.array(Image.open(get_full_path(self.images_root, filename, '.jpg')).convert('RGB'))
 
-        # with open(get_full_path(self.images_root, filename, '.jpg'), 'rb') as f:
-        #    image = load_image(f).convert('RGB')
         with open(get_full_path(self.labels_root, filename, '.txt')) as f:
             lines = f.readlines()
             label = [int(currentline[0]) for currentline in lines]
         if self.imgtransform is not None:
             image = self.imgtransform(image)
+            image = image.to(self.device)
 
         return image, label
 
