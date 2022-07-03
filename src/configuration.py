@@ -3,11 +3,13 @@ lt_dataset_output_path = "./dataset_voc_lt/"
 
 test_dataset_path = "./dataset_org/VOCtest_06-Nov-2007/VOCdevkit/VOC2007/"
 test_dataset_output_path = "./dataset_voc_test/"
+test_weight_path = "src/weight/weights_22000.weights"
 
 debug_mode = False
 
 iteration = 100000
 batch_size_ = 32
+test_batch_size = 32
 lr_ = 0.01
 momentum_ = 0.9
 weight_decay_ = 0.0001

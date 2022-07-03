@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torchvision import models
+from torchmetrics.functional import precision_recall
 
 class SubNet(nn.Module):
     def __init__(self):    
@@ -9,11 +10,13 @@ class SubNet(nn.Module):
         layers = list(resnet50.children())
         self.lastStage = nn.Sequential(*layers[7:9])
         self.fullyConnected = nn.Linear(2048, 20)
+        self.activation = torch.nn.Sigmoid()
         
     def forward(self,x):
         x = self.lastStage(x)
         x = x.view(-1, self.num_flat_features(x))
         x = self.fullyConnected(x)
+        x = self.activation(x)
         return x
 
     def num_flat_features(self, x):
