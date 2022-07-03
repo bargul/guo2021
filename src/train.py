@@ -11,11 +11,15 @@ from torch.utils.tensorboard import SummaryWriter
 
 from tqdm import tqdm 
 from copy import deepcopy
+import time
 
 
 # Dataset
 transform_train = transforms.Compose([transforms.ToPILImage(), transforms.ToTensor(), transforms.Resize([224,224])])
 training_data = VOC(root=lt_dataset_output_path, imgtransform=transform_train)
+
+test_data = VOC(root=test_dataset_output_path, imgtransform=transform_train)
+testLoader = DataLoader(test_data, batch_size=test_batch_size, shuffle=False)
 
 def splitDataset(training_data, validation_set_ratio):
   train_count = int(len(training_data)*(1-validation_set_ratio))
@@ -61,7 +65,7 @@ Lcls = nn.BCEWithLogitsLoss()
 Lcon = nn.MSELoss()
 
 # Tensorboard
-writer = SummaryWriter(tnsrbrd_dir)
+writer = SummaryWriter("{}/{}".format(tnsrbrd_dir,int(time.time())))
 
 # https://discuss.pytorch.org/t/is-there-any-nice-pre-defined-function-to-calculate-precision-recall-and-f1-score-for-multi-class-multilabel-classification/103353
 def F1_score(prob, label):
@@ -75,7 +79,7 @@ def F1_score(prob, label):
     accuracy = (TP+TN)/(TP+TN+FP+FN)
     precision = torch.mean(TP / (TP + FP + epsilon))
     recall = torch.mean(TP / (TP + FN + epsilon))
-    print("Acc:{} Precision:{} Recall:{}".format(accuracy,precision,recall))
+    #print("Acc:{} Precision:{} Recall:{}".format(accuracy,precision,recall))
     F1scr = 2 * precision * recall / (precision + recall + epsilon)
     return precision, recall, F1scr
 
@@ -94,6 +98,32 @@ def calcLoss(uniform_dataloader, rebalanced_dataloader):
     loss +=lambda_ * ( Lcon(u,uHat) + Lcon(r,rHat))
   return loss, u , r, uHat, rHat, xU, yU, xR, yR
 
+def runOnDataset(dataloader,net,name,colour="blue"):
+  iterations = int(len(dataloader) / batch_size_)
+  counter = 0
+  precision = 0
+  recall = 0
+  F1scr = 0
+  net.eval()
+  for i in tqdm(range(iterations), desc=name, colour=colour):
+    counter+= 1
+    x, y = next(iter(dataloader))
+    uniform , resampled = net(x)
+
+    inference_result = ( uniform + resampled )/ 2
+    inference_result = (inference_result>threshold).float()
+
+    tmp_precision, tmp_recall , tmp_f1 = F1_score(y, inference_result)
+    precision += tmp_precision.item()
+    recall += tmp_recall.item()
+    F1scr += tmp_f1.item()
+  precision /= counter
+  recall /= counter
+  F1scr /= counter
+  return precision,recall,F1scr    
+
+
+
 total_iterations = int(len(train_set) / batch_size_)
 total_iterations_val = int(len(val_set) / batch_size_)
 patience = 0
@@ -103,9 +133,10 @@ F1scr_val = 0
 while patience < patience_level:
   epoch_counter += 1
   avg_loss_iters = 0
-  # Train 
-  net.train()
+  ##########  Train #############
+ 
   for i in tqdm(range(total_iterations), desc="train", colour='green'):
+      net.train()
       batch_counter += 1
       optimizer.zero_grad()
       loss, u, r, uHat, rHat, xU, yU, xR, yR = calcLoss(uniform_dataloader, rebalanced_dataloader)
@@ -114,56 +145,37 @@ while patience < patience_level:
       optimizer.step()
       writer.add_scalar("Training/loss", loss, batch_counter)
 
+      uniform_result = (u>threshold).float()
+      uniform_precision, uniform_recall, uniform_F1scr = F1_score(yU, uniform_result)
+
+      resampled_result = (r>threshold).float()
+      resampled_precision, resampled_recall, resampled_F1scr = F1_score(yR, resampled_result)
+
+      writer.add_scalar("Training/uniform/precision", uniform_precision, batch_counter)
+      writer.add_scalar("Training/uniform/recall", uniform_recall, batch_counter)
+      writer.add_scalar("Training/uniform/F1scr", uniform_F1scr, batch_counter)
+
+      writer.add_scalar("Training/resampled/precision", resampled_precision, batch_counter)
+      writer.add_scalar("Training/resampled/recall", resampled_recall, batch_counter)
+      writer.add_scalar("Training/resampled/F1scr", resampled_F1scr, batch_counter)
+
+      if batch_counter % 20 == 0:
+        ##########  Validation #############
+        precision_val,recall_val,F1scr_val = runOnDataset(uniform_dataloader_val,net,"val")          
+        writer.add_scalar("Validation/precision", precision_val, batch_counter)
+        writer.add_scalar("Validation/recall", recall_val, batch_counter)
+        writer.add_scalar("Validation/F1scr", F1scr_val, batch_counter)
+
+        ##########  Test #############
+        precision_test,recall_test,F1scr_test = runOnDataset(testLoader,net,"test","red")          
+        writer.add_scalar("Test/precision", precision_test, batch_counter)
+        writer.add_scalar("Test/recall", recall_test, batch_counter)
+        writer.add_scalar("Test/F1scr", F1scr_test, batch_counter)
+
+
   avg_loss_iters = avg_loss_iters / total_iterations
-
-  uniform_result = (u>threshold).float()
-  uniform_precision, uniform_recall, uniform_F1scr = F1_score(yU, uniform_result)
-
-  resampled_result = (r>threshold).float()
-  resampled_precision, resampled_recall, resampled_F1scr = F1_score(yR, resampled_result)
-
   writer.add_scalar("Training/avg_loss", avg_loss_iters, epoch_counter)
-  
-  writer.add_scalar("Training/uniform/precision", uniform_precision, epoch_counter)
-  writer.add_scalar("Training/uniform/recall", uniform_recall, epoch_counter)
-  writer.add_scalar("Training/uniform/F1scr", uniform_F1scr, epoch_counter)
-
-  writer.add_scalar("Training/resampled/precision", resampled_precision, epoch_counter)
-  writer.add_scalar("Training/resampled/recall", resampled_recall, epoch_counter)
-  writer.add_scalar("Training/resampled/F1scr", resampled_F1scr, epoch_counter)
-  
-  ##########  Validation #############
-  counter_val = 0
-  net.eval()
-  precision_val = 0
-  recall_val = 0
-  F1scr_val = 0
-  loss_val = 0
-
-  for i in tqdm(range(total_iterations_val), desc="val", colour='blue'):
-    counter_val+= 1
-    loss, u_val, r_val, uHat_val, rHat_val, xU_val, yU_val, xR_val, yR_val = calcLoss(uniform_dataloader_val, uniform_dataloader_val)
-    inference_result_val = ( u_val + uHat_val )/ 2
-    inference_result_val = (inference_result_val>threshold).float()
-
-    tmp_precision, tmp_recall , tmp_f1 = F1_score(yU_val, inference_result_val)
-    precision_val += tmp_precision.item()
-    recall_val += tmp_recall.item()
-    F1scr_val += tmp_f1.item()
-    loss_val += loss.item()
-    
-  precision_val /= counter_val
-  recall_val /= counter_val
-  F1scr_val /= counter_val
-  avg_loss_val = loss_val/counter_val
-
-
-  writer.add_scalar("Validation/precision", precision_val, epoch_counter)
-  writer.add_scalar("Validation/recall", recall_val, epoch_counter)
-  writer.add_scalar("Validation/F1scr", F1scr_val, epoch_counter)
-  writer.add_scalar("Validation/avg_loss", avg_loss_val, epoch_counter)
-
-
+   
   '''
   if F1scr_val_new > F1scr_val:
     F1scr_val = F1scr_val_new 
