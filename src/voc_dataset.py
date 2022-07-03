@@ -1,10 +1,10 @@
 # from dataloader.trsfrms import must_transform
+from fileinput import filename
 from torch.utils.data import Dataset
 # from torchvision.datasets import ImageFolder
 from torchvision import transforms
 from PIL import Image
 import numpy as np
-import matplotlib.pyplot as plt
 import os
 import torch
 
@@ -26,6 +26,11 @@ def image_basename(filename):
 
 # Standard Pascal VOC format
 class VOC(Dataset):
+
+    CLASSES = ('aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car',
+                'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse',
+                'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train',
+                'tvmonitor')
 
     def __init__(self, root, imgtransform=None):
         self.images_root = os.path.join(root, 'images')
@@ -59,6 +64,42 @@ class VOC(Dataset):
 
     def __len__(self):
         return len(self.filenames)
+
+    def get_cat2imgs(self):
+            """Get a dict with class as key and img_ids as values, which will be
+            used in :class:`ClassAwareSampler`.
+            Returns:
+                dict[list]: A dict of per-label image list,
+                the item of the dict indicates a label index,
+                corresponds to the image index that contains the label.
+            """
+            if self.CLASSES is None:
+                raise ValueError('self.CLASSES can not be None')
+            # sort the label index
+            cat2imgs = {i: [] for i in range(len(self.CLASSES))}
+            for i in range(len(self)):
+                cat_ids = set(self.get_cat_ids(i))
+                for cat in cat_ids:
+                    cat2imgs[cat].append(i)
+            return cat2imgs
+
+    def get_cat_ids(self, idx):
+        """Get category ids by index.
+        Args:
+            idx (int): Index of data.
+        Returns:
+            list[int]: All categories in the image of specified index.
+        """
+        resultList = []
+        filePath = "../dataset_voc_lt/labels/{}.txt".format(self.filenames[idx])
+        with open(filePath,"r") as f:
+            lines = f.readlines()
+            for index,elem in enumerate(lines):
+                elem = elem.strip()
+                elem = int(elem)
+                if elem == 1:
+                    resultList.append(index)
+        return resultList
 
 
 if __name__ == '__main__':

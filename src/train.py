@@ -1,12 +1,12 @@
 from voc_dataset import *
-from sampler import *
+from ClassAwareSampler import *
 from Network import *
 
 import torch
 from torch.utils.data import Dataset,DataLoader
 from torchvision import datasets
 from torchvision.transforms import ToTensor
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from torchvision import transforms
 
 debugMode = False
@@ -20,7 +20,7 @@ device = torch.device(dev)
 
 # Dataset
 transform_train = transforms.Compose([transforms.ToPILImage(), transforms.ToTensor(), transforms.Resize([224,224])])
-training_data = VOC(root="./dataset_voc_lt", imgtransform=transform_train)
+training_data = VOC(root="../dataset_voc_lt", imgtransform=transform_train)
 
 labels_map = {
     0:"aeroplane",
@@ -68,7 +68,10 @@ lambda_ = 0.1
 net = Net().to(device)
 print(net)
 
+
 uniform_dataloader = DataLoader(training_data, batch_size=batch_size_, shuffle=False)
+rsampler = ClassAwareSampler(dataset=training_data,num_sample_class=20,samples_per_gpu=batch_size_)
+rebalanced_dataloader = DataLoader(training_data, batch_size=batch_size_, shuffle=False,sampler=rsampler)
 optimizer = torch.optim.SGD(net.parameters(), weight_decay = weight_decay_, lr=lr_, momentum=momentum_)
 
 Lcls = nn.BCEWithLogitsLoss()
@@ -77,6 +80,7 @@ Lcon = nn.MSELoss()
 net.train()
 for i in range(epoch):
     optimizer.zero_grad()
+    xR, yR = next(iter(rebalanced_dataloader))
     xU, yU = next(iter(uniform_dataloader))
     print("dummy")
 
