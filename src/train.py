@@ -135,10 +135,10 @@ while patience < patience_level:
   ##########  Validation #############
   counter_val = 0
   net.eval()
-  precision_val = torch.tensor([0.0], device = dev)
-  recall_val = torch.tensor([0.0], device = dev)
-  F1scr_val = torch.tensor([0.0], device = dev)
-  loss_val = torch.tensor([0.0], device = dev)
+  precision_val = 0
+  recall_val = 0
+  F1scr_val = 0
+  loss_val = 0
 
   for i in tqdm(range(total_iterations_val), desc="val", colour='blue'):
     counter_val+= 1
@@ -147,10 +147,10 @@ while patience < patience_level:
     inference_result_val = (inference_result_val>threshold).float()
 
     tmp_precision, tmp_recall , tmp_f1 = F1_score(yU_val, inference_result_val)
-    precision_val += tmp_precision
-    recall_val += tmp_recall
-    F1scr_val += tmp_f1
-    loss_val += loss
+    precision_val += tmp_precision.item()
+    recall_val += tmp_recall.item()
+    F1scr_val += tmp_f1.item()
+    loss_val += loss.item()
     
   precision_val /= counter_val
   recall_val /= counter_val
