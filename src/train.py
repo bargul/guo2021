@@ -86,38 +86,79 @@ def calcLoss(uniform_dataloader, rebalanced_dataloader):
 total_iterations = int(len(train_set) / batch_size_)
 total_iterations_val = int(len(val_set) / batch_size_)
 patience = 0
-epoch_counter = 1 
+epoch_counter = 0 
+batch_counter = 0
 F1scr_val = 0
 while patience < patience_level:
+  epoch_counter += 1
   avg_loss_iters = 0
-  avg_loss_iters_val = 0
-  # Train
+  # Train 
   net.train()
   for i in tqdm(range(total_iterations), desc="train", colour='green'):
+      batch_counter += 1
       optimizer.zero_grad()
       loss, u, r, uHat, rHat, xU, yU, xR, yR = calcLoss(uniform_dataloader, rebalanced_dataloader)
       avg_loss_iters += loss.item()
       loss.backward()
       optimizer.step()
-  avg_loss_iters = avg_loss_iters / total_iterations
-  writer.add_scalar("Training Set Loss ", avg_loss_iters, epoch_counter) 
-  rR = (r>threshold).float()
-  precision, recall, F1scr = F1_score(yR, rR)
-  # Validation
-  net.eval()
-  for i in tqdm(range(total_iterations_val), desc="val", colour='blue'):
-    loss, u_val, r_val, uHat_val, rHat_val, xU_val, yU_val, xR_val, yR_val = calcLoss(uniform_dataloader_val, uniform_dataloader_val)
-    avg_loss_iters += loss.item()
-  avg_loss_iters_val = avg_loss_iters_val / total_iterations_val
-  writer.add_scalar("Validation set loss", avg_loss_iters_val, epoch_counter) 
-  rR_val = (r_val>threshold).float()
-  precision_val, recall_val, F1scr_val_new = F1_score(yR_val, rR_val)
+      writer.add_scalar("Training/loss", loss, batch_counter)
 
+  avg_loss_iters = avg_loss_iters / total_iterations
+
+  uniform_result = (u>threshold).float()
+  uniform_precision, uniform_recall, uniform_F1scr = F1_score(yU, uniform_result)
+
+  resampled_result = (r>threshold).float()
+  resampled_precision, resampled_recall, resampled_F1scr = F1_score(yR, resampled_result)
+
+  writer.add_scalar("Training/avg_loss", avg_loss_iters, epoch_counter)
+  
+  writer.add_scalar("Training/uniform/precision", uniform_precision, epoch_counter)
+  writer.add_scalar("Training/uniform/recall", uniform_recall, epoch_counter)
+  writer.add_scalar("Training/uniform/F1scr", uniform_F1scr, epoch_counter)
+
+  writer.add_scalar("Training/resampled/precision", resampled_precision, epoch_counter)
+  writer.add_scalar("Training/resampled/recall", resampled_recall, epoch_counter)
+  writer.add_scalar("Training/resampled/F1scr", resampled_F1scr, epoch_counter)
+  
+  ##########  Validation #############
+  counter_val = 0
+  net.eval()
+  precision_val = torch.tensor([0.0], device = dev)
+  recall_val = torch.tensor([0.0], device = dev)
+  F1scr_val = torch.tensor([0.0], device = dev)
+  loss_val = torch.tensor([0.0], device = dev)
+
+  for i in tqdm(range(total_iterations_val), desc="val", colour='blue'):
+    counter_val+= 1
+    loss, u_val, r_val, uHat_val, rHat_val, xU_val, yU_val, xR_val, yR_val = calcLoss(uniform_dataloader_val, uniform_dataloader_val)
+    inference_result_val = ( u_val + uHat_val )/ 2
+    inference_result_val = (inference_result_val>threshold).float()
+
+    tmp_precision, tmp_recall , tmp_f1 = F1_score(yU_val, inference_result_val)
+    precision_val += tmp_precision
+    recall_val += tmp_recall
+    F1scr_val += tmp_f1
+    loss_val += loss
+    
+  precision_val /= counter_val
+  recall_val /= counter_val
+  F1scr_val /= counter_val
+  avg_loss_val = loss_val/counter_val
+
+
+  writer.add_scalar("Validation/precision", precision_val, epoch_counter)
+  writer.add_scalar("Validation/recall", recall_val, epoch_counter)
+  writer.add_scalar("Validation/F1scr", F1scr_val, epoch_counter)
+  writer.add_scalar("Validation/avg_loss", avg_loss_val, epoch_counter)
+
+
+  '''
   if F1scr_val_new > F1scr_val:
     F1scr_val = F1scr_val_new 
     modelsavename = "weights_{}.weights".format(epoch_counter)
     torch.save(net.state_dict(), modelsavename)
     print("saved",modelsavename)
-
+  '''
 
 print("End")
