@@ -93,7 +93,7 @@ class VOC(Dataset):
             list[int]: All categories in the image of specified index.
         """
         resultList = []
-        filePath = "../dataset_voc_lt/labels/{}.txt".format(self.filenames[idx])
+        filePath = "./dataset_voc_lt/labels/{}.txt".format(self.filenames[idx])
         with open(filePath,"r") as f:
             lines = f.readlines()
             for index,elem in enumerate(lines):
@@ -107,7 +107,7 @@ class VOC(Dataset):
 if __name__ == '__main__':
     img_mean = np.array([104, 117, 128]).reshape(1, 1, 3)
     transform_train = transforms.Compose([transforms.ToPILImage(), transforms.ToTensor(), transforms.Resize([224,224])])
-    myvoc = VOC(root="C:/aal/lrn/METU/CENG502/proj/r1/guo2021/dataset_voc_lt", imgtransform = transform_train)
+    myvoc = VOC(root="./dataset_voc_lt", imgtransform = transform_train)
     img, lbl = myvoc[1]
     plt.imshow(img)
     img = Image.fromarray(img)

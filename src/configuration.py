@@ -6,8 +6,7 @@ test_dataset_output_path = "./dataset_voc_test/"
 
 debug_mode = False
 
-iteration = 100000
-batch_size_ = 32
+batch_size_ = 8
 lr_ = 0.01
 momentum_ = 0.9
 weight_decay_ = 0.0001
