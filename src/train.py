@@ -18,6 +18,8 @@ training_data = VOC(root=lt_dataset_output_path, imgtransform=transform_train)
 train_count = int(len(training_data)*(1-validation_set_ratio))
 val_count = len(training_data) - train_count
 train_set, val_set = random_split(training_data, [train_count, val_count], generator=torch.Generator().manual_seed(seed))
+train_set = train_set.dataset
+val_set = val_set.dataset
 
 
 if debug_mode:
@@ -87,7 +89,8 @@ patience = 0
 epoch_counter = 1 
 F1scr_val = 0
 while patience < patience_level:
-  avg_loss_iters, avg_loss_iters_val = 0
+  avg_loss_iters = 0
+  avg_loss_iters_val = 0
   # Train
   net.train()
   for i in tqdm(range(total_iterations), desc="train", colour='green'):
@@ -103,7 +106,7 @@ while patience < patience_level:
   # Validation
   net.eval()
   for i in tqdm(range(total_iterations_val), desc="val", colour='blue'):
-    loss, u_val, r_val, uHat_val, rHat_val, = calcLoss(uniform_dataloader_val, uniform_dataloader_val)
+    loss, u_val, r_val, uHat_val, rHat_val, xU_val, yU_val, xR_val, yR_val = calcLoss(uniform_dataloader_val, uniform_dataloader_val)
     avg_loss_iters += loss.item()
   avg_loss_iters_val = avg_loss_iters_val / total_iterations_val
   writer.add_scalar("Validation set loss", avg_loss_iters_val, epoch_counter) 
