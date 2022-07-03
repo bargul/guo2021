@@ -1,4 +1,5 @@
 from datetime import datetime
+import torch 
 
 train_dataset_path = "./dataset_org/VOCtrainval_11-May-2012/VOCdevkit/VOC2012/"
 lt_dataset_output_path = "./dataset_voc_lt/"
@@ -21,6 +22,7 @@ weight_decay_ = 0.0001
 lambda_ = 0.1
 save_weight_interval = 100
 patience_level = 8
+threshold = torch.tensor([0.5]).to(dev)
 tnsrbrd_dir = "./runs"
 
 uniform_branch_active = True 
