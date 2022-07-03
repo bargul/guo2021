@@ -8,12 +8,14 @@ from torch.utils.data import Dataset,DataLoader
 import matplotlib.pyplot as plt
 from torchvision import transforms
 
+from tqdm import tqdm
+
 # Initials
 if torch.cuda.is_available():  
-  dev = "cuda:0" 
+  devtype = "cuda:0" 
 else:  
-  dev = "cpu"  
-device = torch.device(dev)  
+  devtype = "cpu"  
+dev = torch.device(devtype)  
 
 # Dataset
 transform_train = transforms.Compose([transforms.ToPILImage(), transforms.ToTensor(), transforms.Resize([224,224])])
@@ -33,7 +35,7 @@ if debug_mode:
     plt.show()
 
 
-net = Net().to(device)
+net = Net().to(dev)
 print(net)
 
 uniform_dataloader = DataLoader(training_data, batch_size=batch_size_, shuffle=False)
@@ -44,14 +46,17 @@ optimizer = torch.optim.SGD(net.parameters(), weight_decay = weight_decay_, lr=l
 Lcls = nn.BCEWithLogitsLoss()
 Lcon = nn.MSELoss()
 
+total_iterations = int(len(training_data) / batch_size_)
+
+
 net.train()
-for i in range(iteration):
-    print("Iteration:",i)
+for i in tqdm(range(total_iterations), desc="i", colour='green'):
+    print("total_iterations: {}, i: {}".format(total_iterations, i))
     optimizer.zero_grad()
     xR, yR = next(iter(rebalanced_dataloader))
     xU, yU = next(iter(uniform_dataloader))
-
-    loss = None
+    
+    loss = torch.tensor([0.0], device = dev)
     if uniform_branch_active:
       u , uHat = net(xU)
       loss += Lcls(u,yU)
@@ -60,7 +65,7 @@ for i in range(iteration):
       loss += Lcls(r,yR)
     if uniform_branch_active and resampled_branch_active and logit_consistency:
       loss +=lambda_ * ( Lcon(u,uHat) + Lcon(r,rHat))
-      
+    
     loss.backward()
     optimizer.step()
     if i % 100 == save_weight_interval:

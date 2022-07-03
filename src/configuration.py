@@ -8,8 +8,8 @@ test_weight_path = "src/weight/weights_22000.weights"
 debug_mode = False
 
 iteration = 100000
-batch_size_ = 32
 test_batch_size = 32
+batch_size_ = 8
 lr_ = 0.01
 momentum_ = 0.9
 weight_decay_ = 0.0001
