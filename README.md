@@ -19,7 +19,6 @@ The paper is published in CVPR2021 and achieves state of the art results. On top
 
 ## 2.1. The original method
 
-@TODO: Explain the original method.
 - Creating long tailed dataset from Pascal Voc and Ms Coco with Pareto distribution.
 - Creating a Network, the shared bottom network is the conventional ResNet50 excluding the last stage. 
 - For Subnet-U and Subnet-R, author states that first include an identical copy of the last stage of ResNet,After that, a linear classifier in the form of a fully connected layer is added to each branch.
@@ -28,10 +27,12 @@ The paper is published in CVPR2021 and achieves state of the art results. On top
 
 ## 2.2. Our interpretation 
 
-@TODO: Explain the parts that were not clearly explained in the original paper and how you interpreted them.
 - Creating Long tailed dataset part is only explained with a sentence Pareto distribution used, we follow the references but could not found the exact way so we use the 6-6-8 split which explained in papers with 4-20 , 20-100 and 100-775 image sample intervals. 
 - We use Resnet50 Imagenet Pretrained model from torchvision model zoo, we are not sure that if its the same pretrained values. We split the network from last stage and try to create 2 subnet model from the excluding stage , to produce 20 class 1-hot vector we added linear layer with sigmoid activation layer.
-- We used nn.BCEWithLogitsLoss() for Conventional Classification Loss and nn.MSELoss() for Logit Consistency. It is not explained clearly that how the uniform and resampled data will feed the system. What is the order ?BARANBARANBARAN????
+- We used nn.BCEWithLogitsLoss() for Conventional Classification Loss and nn.MSELoss() for Logit Consistency. It is not explained clearly that how the uniform and resampled data will feed the system. What is the order ? The subnet interaction between each other were unclear. The interaction at the subnet among the net input from backbone, the and the output were unclear.
+- For testing only one of the subnets (i.e Subnet-U) was only the respective subnet trained or was all the system trained then only the respective subnet used? We trained only respective subnet.
+- Some parameters werw given but many were missing such as batch size, training epochs. We did not know if the mean substraction and normalized were applied? 
+- The usage of validation set was unclear. We don't know how they used it , we split our training set as %90-%10.
 
 # 3. Experiments and results
 
