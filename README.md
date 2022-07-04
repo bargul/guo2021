@@ -61,7 +61,7 @@ The ablation results table which shows the indivual componets' effects show that
   <img src="readme/img3.png">
 </p>
 <p align="center">
-  Table 1
+  Table 2
 </p>
 
 @TODO: Summarize the paper, the method & its contributions in relation with the existing literature.
@@ -86,7 +86,7 @@ The ablation results table which shows the indivual componets' effects show that
   <img src="readme/img20.jpeg">
 </p>
 <p align="center">
-  Figure 20
+  Figure 3
 </p>
 
 - We use Resnet50 Imagenet Pretrained model from torchvision model zoo, we are not sure that if its the same pretrained values. We split the network from last stage and try to create 2 subnet model from the excluding stage , to produce 20 class 1-hot vector we added linear layer with sigmoid activation layer. As you can see from the figure above , we split the network from stage 5 and create subnetworks.
@@ -175,11 +175,11 @@ Even though we used the suggested parameters in the paper, unfortunately the net
   <img src="readme/img21.png">
 </p>
 <p align="center">
-  Figure 21
+  Figure 4
 </p>
 
 we obtained some results, however we couldn't get numerically stable results as desired. We have several thoughts on what might be the cause. Head classes' performance are improvable but medium and tail classes are not as well as they are supposed to be. Obviously long tailed distribution is a challenging problem. 
-At Figure 21 you can find the results of
+At Figure 4 you can find the results of
 - Uniform branch experiment
 - Resampled branch experiment
 - Uniform + Resampled branch experiment
@@ -191,10 +191,10 @@ Both figures supports that the network overfits during training but could not le
   <img src="readme/img22.png">
 </p>
 <p align="center">
-  Figure 22
+  Figure 5
 </p>
 
-At Figure 22 you can find the mAP results of head,medium and tail classes with
+At Figure 5 you can find the mAP results of head,medium and tail classes with
 - Uniform branch experiment
 - Resampled branch experiment
 
