@@ -18,12 +18,14 @@ Uniform and Re-balanced Samplings
 ## 2.1. The original method
 
 @TODO: Explain the original method.
-- Creating long tailed dataset from Pascal Voc and Ms Coco
+- Creating long tailed dataset from Pascal Voc and Ms Coco with Pareto distribution.
+- Creating a Network, the shared bottom network is the conventional ResNet50 excluding the last stage. 
+- For Subnet-U and Subnet-R, author states that first include an identical copy of the last stage of ResNet,After that, a linear classifier in the form of a fully connected layer is added to each branch,
 ## 2.2. Our interpretation 
 
 @TODO: Explain the parts that were not clearly explained in the original paper and how you interpreted them.
 - Creating Long tailed dataset part is only explained with a sentence Pareto distribution used, we follow the references but could not found the exact way so we use the 6-6-8 split which explained in papers with 4-20 , 20-100 and 100-775 image sample intervals. 
-- 
+- We use Resnet50 Imagenet Pretrained model from torchvision model zoo, we are not sure that if its the same pretrained values. We split the network from last stage and try to create 2 subnet model from the excluding stage , to produce 20 class 1-hot vector we added linear layer with sigmoid activation layer.   
 
 # 3. Experiments and results
 
