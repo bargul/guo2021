@@ -40,6 +40,8 @@ The paper is published in CVPR2021 and achieves state of the art results. On top
 
 @TODO: Describe the setup of the original paper and whether you changed any settings.\
 Original paper used Pytorch 1.4.0 version but we used 1.12.0 .\
+We use Pascal Voc 2012 as training and validation set , Pascal Voc 2007 as test set.
+We create the network by changing the structure of Resnet50 model as stated in paper.
 We tried to follow the same procedure while preparing Long Tailed dataset but our set is different inevitably.
 
 ## 3.2. Running the code
@@ -100,6 +102,8 @@ All the parameters can be found in configuration.py file. After setting paremete
 @TODO: Present your results and compare them to the original paper. Please number your figures & tables as if this is a paper.
 
 # 4. Conclusion
+
+We could't reach the succesfull result as paper does. Main reason could be the dataset conversion to LT . Head classes can be found but medium and tail classes are not accurate as head classes.
 
 @TODO: Discuss the paper in relation to the results in the paper and your results.
 

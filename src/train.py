@@ -122,20 +122,25 @@ def runOnDataset(dataloader,name,colour="blue"):
 
   return precision, recall, F1scr, pred_raw_all, pred_all, y_all
 
-def ltAnalysis(mAP_cls,count):
-  print("Batch Count:{}".format(count))
-  print("Head Scores")
+def ltAnalysis(mAP_cls,batch_counter,name):
+  head = 0
+  medium = 0
+  tail = 0
   for label in lt["head"]:
     id = voc_labels[label]
-    print(label,mAP_cls[id])
-  print("Medium Scores")
+    head += mAP_cls[id]
   for label in lt["medium"]:
     id = voc_labels[label]
-    print(label,mAP_cls[id])
-  print("Tail Scores")
+    medium += mAP_cls[id]
   for label in lt["tail"]:
     id = voc_labels[label]
-    print(label,mAP_cls[id])
+    tail += mAP_cls[id]
+  head = head/6
+  medium = medium/6
+  tail = tail/8
+  writer.add_scalar("{}/head".format(name), head, batch_counter)
+  writer.add_scalar("{}/medium".format(name), medium, batch_counter)
+  writer.add_scalar("{}/tail".format(name), tail, batch_counter)
 
 apm_val = APMeter()
 apm_test = APMeter()
@@ -200,7 +205,7 @@ while patience < patience_level:
         apm_val.add(torch.from_numpy(pred_all_val), torch.from_numpy(y_all_val))
         mAP_val_cls = apm_val.value().cpu().detach().numpy()
         mAP_val = mAP_val_cls.mean()
-        ltAnalysis(mAP_val_cls,batch_counter)
+        ltAnalysis(mAP_val_cls,batch_counter,"Validation")
 
         writer.add_scalar("Validation/mAP", mAP_val, batch_counter)
 
@@ -214,7 +219,7 @@ while patience < patience_level:
         apm_test.add(torch.from_numpy(pred_all_test), torch.from_numpy(y_all_test))
         mAP_test_cls = apm_val.value().cpu().detach().numpy()
         mAP_test = mAP_test_cls.mean()
-        ltAnalysis(mAP_test_cls,batch_counter)
+        ltAnalysis(mAP_test_cls,batch_counter,"Test")
         writer.add_scalar("Test/mAP", mAP_test, batch_counter)
 
   if F1scr_val_new > F1scr_val:
