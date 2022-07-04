@@ -18,10 +18,12 @@ Uniform and Re-balanced Samplings
 ## 2.1. The original method
 
 @TODO: Explain the original method.
-
+- Creating long tailed dataset from Pascal Voc and Ms Coco
 ## 2.2. Our interpretation 
 
 @TODO: Explain the parts that were not clearly explained in the original paper and how you interpreted them.
+- Creating Long tailed dataset part is only explained with a sentence Pareto distribution used, we follow the references but could not found the exact way so we use the 6-6-8 split which explained in papers with 4-20 , 20-100 and 100-775 image sample intervals. 
+- 
 
 # 3. Experiments and results
 
@@ -29,7 +31,7 @@ Uniform and Re-balanced Samplings
 
 @TODO: Describe the setup of the original paper and whether you changed any settings.\
 Original paper used Pytorch 1.4.0 version but we used 1.12.0 .\
-We tried to follow the same procedure while preparing Long Tailed dataset but our set is different İnevitably.
+We tried to follow the same procedure while preparing Long Tailed dataset but our set is different inevitably.
 
 ## 3.2. Running the code
 
