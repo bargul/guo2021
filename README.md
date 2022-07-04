@@ -117,6 +117,7 @@ All the parameters can be found in configuration.py file. After setting paremete
 │   └── labels\
 │   ├── info.txt\
 ├── src\
+│   ├── apmeter.py\
 │   ├── ClassAwareSampler.py\
 │   ├── configuration.py\
 │   ├── createLongTailedDataset.py\
@@ -137,13 +138,37 @@ All the parameters can be found in configuration.py file. After setting paremete
 
 ## 3.3. Results
 
-@TODO: Present your results and compare them to the original paper. Please number your figures & tables as if this is a paper.
+Even though we used the suggested parameters in the paper, unfortunately the network overfits. Since we didn't want to employ other tools to prevent overfitting we tested other parameters but could not land on a good solution.
+
+<p align="center">
+  <img src="readme/img21.png">
+</p>
+<p align="center">
+  Figure 21
+</p>
+
+At Figure 21 you can find the results of
+- Uniform branch experiment
+- Resampled branch experiment
+- Uniform + Resampled branch experiment
+- Uniform + Resampled + Logit consistinency
+
+Both figures supports that the network overfits during training but could not learn medium and tail classes well. We believe the main reason would be the difference in LT dataset we create. 
+
+<p align="center">
+  <img src="readme/img22.png">
+</p>
+<p align="center">
+  Figure 22
+</p>
+
+At Figure 22 you can find the mAP results of head,medium and tail classes with
+- Uniform branch experiment
+- Resampled branch experiment
 
 # 4. Conclusion
 
-We could't reach the succesfull result as paper does. Main reason could be the dataset conversion to LT . Head classes can be found but medium and tail classes are not accurate as head classes.
-
-@TODO: Discuss the paper in relation to the results in the paper and your results.
+We could't reach the succesfull result as paper does. Main reason could be the dataset conversion to LT . Head classes can be found but medium and tail classes are not accurate as head classes. We may have to change the creating LT dataset part of the codes. We may also need to investiga the rebalanced sampler if it has unintended behaviour.
 
 # 5. References
 - Network.py - https://deci.ai/blog/measure-inference-time-deep-neural-networks/
