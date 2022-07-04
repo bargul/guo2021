@@ -81,7 +81,15 @@ The ablation results table which shows the indivual componets' effects show that
 ## 2.2. Our interpretation 
 
 - Creating Long tailed dataset part is only explained with a sentence Pareto distribution used, we follow the references but could not found the exact way so we use the 6-6-8 split which explained in papers with 4-20 , 20-100 and 100-775 image sample intervals. 
-- We use Resnet50 Imagenet Pretrained model from torchvision model zoo, we are not sure that if its the same pretrained values. We split the network from last stage and try to create 2 subnet model from the excluding stage , to produce 20 class 1-hot vector we added linear layer with sigmoid activation layer.
+
+<p align="center">
+  <img src="readme/img20.jpeg">
+</p>
+<p align="center">
+  Figure 20
+</p>
+
+- We use Resnet50 Imagenet Pretrained model from torchvision model zoo, we are not sure that if its the same pretrained values. We split the network from last stage and try to create 2 subnet model from the excluding stage , to produce 20 class 1-hot vector we added linear layer with sigmoid activation layer. As you can see from the figure above , we split the network from stage 5 and create subnetworks.
 - We used nn.BCEWithLogitsLoss() for Conventional Classification Loss and nn.MSELoss() for Logit Consistency. It is not explained clearly that how the uniform and resampled data will feed the system. What is the order ? The subnet interaction between each other were unclear. The interaction at the subnet among the net input from backbone, the and the output were unclear.
 - For testing only one of the subnets (i.e Subnet-U) was only the respective subnet trained or was all the system trained then only the respective subnet used? We trained only respective subnet.
 - Some parameters werw given but many were missing such as batch size, training epochs. We did not know if the mean substraction and normalized were applied? 
@@ -117,48 +125,82 @@ All the parameters can be found in configuration.py file. After setting paremete
 
 
 ├── dataset_org\
-│   ├── VOCtest_06-Nov-2007.tar\
 │   ├── VOCtest_06-Nov-2007\
-│   └── VOCtrainval_11-May-2012.tar\
+│   ├── VOCtest_06-Nov-2007.tar\
 │   ├── VOCtrainval_11-May-2012\
+│   └── VOCtrainval_11-May-2012.tar\
 ├── dataset_voc_lt\
 │   ├── dataset_voc_lt.zip\
 │   ├── images\
-│   └── labels\
 │   ├── info.txt\
+│   └── labels\
 ├── dataset_voc_test\
 │   ├── dataset_voc_test.zip\
 │   ├── images\
-│   └── labels\
 │   ├── info.txt\
+│   └── labels\
+├── dockerCommands.txt\
+├── readme\
+│   ├── img1.png\
+│   ├── img20.jpeg\
+│   ├── img21.png\
+│   ├── img22.png\
+│   ├── img2.png\
+│   ├── img3.png\
+│   ├── img4.png\
+│   ├── img5.png\
+│   └── img6.png\
+├── README.md\
+├── runs\
+│   ├── resample\
+│   └── uniform\
 ├── src\
+│   ├── apmeter.py\
 │   ├── ClassAwareSampler.py\
 │   ├── configuration.py\
 │   ├── createLongTailedDataset.py\
 │   ├── createTestDataset.py\
-│   ├── mean_ap.py\
 │   ├── Network.py\
+│   ├── __pycache__\
 │   ├── test.py\
 │   ├── train.py\
-│   ├── VocDataset.py\
-│   └── weights\
-├── runs\
-│   ├── 1656888576_only_uniform\
-│   ├── 1656888901_only_rebalanced\
-│   ├── 1656889605\
-│   └── 1656889821\
-├── dockerCommands.txt\
-├── README.md\
+│   └── VocDataset.py\
+└── weights_1.weights\
 
 ## 3.3. Results
 
-@TODO: Present your results and compare them to the original paper. Please number your figures & tables as if this is a paper.
+Even though we used the suggested parameters in the paper, unfortunately the network overfits. Since we didn't want to employ other tools to prevent overfitting we tested other parameters but could not land on a good solution.
+
+<p align="center">
+  <img src="readme/img21.png">
+</p>
+<p align="center">
+  Figure 21
+</p>
+
+we obtained some results, however we couldn't get numerically stable results as desired. We have several thoughts on what might be the cause. Head classes' performance are improvable but medium and tail classes are not as well as they are supposed to be. Obviously long tailed distribution is a challenging problem. 
+At Figure 21 you can find the results of
+- Uniform branch experiment
+- Resampled branch experiment
+- Uniform + Resampled branch experiment
+- Uniform + Resampled + Logit consistinency
+
+Both figures supports that the network overfits during training but could not learn medium and tail classes well. We believe the main reason would be the difference in LT dataset we create. 
+
+<p align="center">
+  <img src="readme/img22.png">
+</p>
+<p align="center">
+  Figure 22
+</p>
+
+At Figure 22 you can find the mAP results of head,medium and tail classes with
+- Uniform branch experiment
+- Resampled branch experiment
 
 # 4. Conclusion
 
-we obtained some results, however we couldn't prove paper's point. We have several thoughts on what might be the cause. Head classes' performance okey but medium and tail classes are not as well as they are supposed to be. Obviously long tailed distribution is a challenging problem. 
-
-@TODO: Discuss the paper in relation to the results in the paper and your results.
+We could't reach the succesfull result as paper does. Main reason could be the dataset conversion to LT . Head classes can be found but medium and tail classes are not accurate as head classes. We may have to change the creating LT dataset part of the codes. We may also need to investiga the rebalanced sampler if it has unintended behaviour.
 
 # 5. References
 - Network.py - https://deci.ai/blog/measure-inference-time-deep-neural-networks/
@@ -168,7 +210,7 @@ we obtained some results, however we couldn't prove paper's point. We have sever
 
 - [1] (27th reference in the paper) Xuesong Niu, Hu Han, Shiguang Shan, and Xilin Chen. Multi-label co-regularization for semi-supervised facial action unit recognition. In Advances in Neural Information Processing Systems, pages 909–919, 2019. 1, 2, 3, 4, 7
 - [2] (51th reference in the paper) Ying Zhang, Tao Xiang, Timothy M Hospedales, and Huchuan Lu. Deep mutual learning. In IEEE Conference on Computer Vision and Pattern Recognition, pages 4320– 4328, 2018. 1, 2, 3, 4, 7
-
+- [3] Poudel, Sahadev & Kim, Yoon & Vo, Duc & Lee, Sang-Woong. (2020). Colorectal Disease Classification Using Efficiently Scaled Dilation in Convolutional Neural Network. IEEE Access. PP. 1-1. 10.1109/ACCESS.2020.2996770. 
 # Contact
 
 - Baran Gulmez\
