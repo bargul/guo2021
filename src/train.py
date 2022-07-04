@@ -122,6 +122,26 @@ def runOnDataset(dataloader,name,colour="blue"):
 
   return precision, recall, F1scr, pred_raw_all, pred_all, y_all
 
+def ltAnalysis(mAP_cls,batch_counter,name):
+  head = 0
+  medium = 0
+  tail = 0
+  for label in lt["head"]:
+    id = voc_labels[label]
+    head += mAP_cls[id]
+  for label in lt["medium"]:
+    id = voc_labels[label]
+    medium += mAP_cls[id]
+  for label in lt["tail"]:
+    id = voc_labels[label]
+    tail += mAP_cls[id]
+  head = head/6
+  medium = medium/6
+  tail = tail/8
+  writer.add_scalar("{}/head".format(name), head, batch_counter)
+  writer.add_scalar("{}/medium".format(name), medium, batch_counter)
+  writer.add_scalar("{}/tail".format(name), tail, batch_counter)
+
 apm_val = APMeter()
 apm_test = APMeter()
 
@@ -175,18 +195,22 @@ while patience < patience_level:
 
       if batch_counter % 40 == 0:
         ##########  Validation #############
-        precision_val,recall_val,F1scr_val, pred_raw_all_val, pred_all_val, y_all_val = runOnDataset(uniform_dataloader_val,net,"val")          
+        precision_val,recall_val,F1scr_val_new, pred_raw_all_val, pred_all_val, y_all_val = runOnDataset(uniform_dataloader_val,"val")          
         writer.add_scalar("Validation/precision", precision_val, batch_counter)
         writer.add_scalar("Validation/recall", recall_val, batch_counter)
-        writer.add_scalar("Validation/F1scr", F1scr_val, batch_counter)
+        writer.add_scalar("Validation/F1scr", F1scr_val_new, batch_counter)
         #mAP_raw_val, APs_raw_val = eval_map(pred_raw_all_val, y_all_val, avg="samples")
         #mAP_val, APs_val = eval_map(pred_all_val, y_all_val, avg="samples")
         #aa1 = average_precision_score(pred_all_val.astype(bool), np.asarray(y_all_val).astype(bool), average="samples")
         apm_val.add(torch.from_numpy(pred_all_val), torch.from_numpy(y_all_val))
         mAP_val_cls = apm_val.value().cpu().detach().numpy()
         mAP_val = mAP_val_cls.mean()
+        ltAnalysis(mAP_val_cls,batch_counter,"Validation")
+
+        writer.add_scalar("Validation/mAP", mAP_val, batch_counter)
+
         ##########  Test #############
-        precision_test,recall_test,F1scr_test, pred_raw_all_test, pred_all_test, y_all_test = runOnDataset(testLoader,net,"test","red")          
+        precision_test,recall_test,F1scr_test, pred_raw_all_test, pred_all_test, y_all_test = runOnDataset(testLoader,"test","red")          
         writer.add_scalar("Test/precision", precision_test, batch_counter)
         writer.add_scalar("Test/recall", recall_test, batch_counter)
         writer.add_scalar("Test/F1scr", F1scr_test, batch_counter)
@@ -195,14 +219,17 @@ while patience < patience_level:
         apm_test.add(torch.from_numpy(pred_all_test), torch.from_numpy(y_all_test))
         mAP_test_cls = apm_val.value().cpu().detach().numpy()
         mAP_test = mAP_test_cls.mean()
+        ltAnalysis(mAP_test_cls,batch_counter,"Test")
+        writer.add_scalar("Test/mAP", mAP_test, batch_counter)
 
-   
-  '''
   if F1scr_val_new > F1scr_val:
     F1scr_val = F1scr_val_new 
     modelsavename = "weights_{}.weights".format(epoch_counter)
     torch.save(net.state_dict(), modelsavename)
     print("saved",modelsavename)
-  '''
+    patience = 0
+  else:
+    patience += 1
+
 
 print("End")

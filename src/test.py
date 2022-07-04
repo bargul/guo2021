@@ -7,6 +7,21 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
+def F1_score(prob, label):
+    prob = prob.bool()
+    label = label.bool()
+    epsilon = 1e-7
+    TP = (prob & label).sum().float()
+    TN = ((~prob) & (~label)).sum().float()
+    FP = (prob & (~label)).sum().float()
+    FN = ((~prob) & label).sum().float()
+    accuracy = (TP+TN)/(TP+TN+FP+FN)
+    precision = torch.mean(TP / (TP + FP + epsilon))
+    recall = torch.mean(TP / (TP + FN + epsilon))
+    #print("Acc:{} Precision:{} Recall:{}".format(accuracy,precision,recall))
+    F1scr = 2 * precision * recall / (precision + recall + epsilon)
+    return precision, recall, F1scr
+
 # Initials
 if torch.cuda.is_available():  
   dev = "cuda:0" 
@@ -23,12 +38,8 @@ net = net.to(device)
 net.eval()
   
 for testData,testLabel in testLoader:
-    u , r = net(testData)
-    result = torch.nn.functional.relu((u+r)/2)
-    print("test")
-
-
-print("End")
-
-
+    uniform , resampled = net(testData)
+    prediction_raw = ( uniform + resampled )/ 2
+    prediction = (prediction_raw>threshold).float()
+    precision, recall , f1 = F1_score(testLabel, prediction)
 

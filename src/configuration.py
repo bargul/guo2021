@@ -84,3 +84,9 @@ labels_map = {
     18:"train",
     19:"tvmonitor"
 }
+
+lt = {
+  "head":["person","dog","car","chair","cat","bird"],
+  "medium":["bottle","aeroplane","tvmonitor","train","diningtable","pottedplant"],
+  "tail":["bicycle","motorbike","boat","sofa","horse","bus","sheep","cow"]
+}

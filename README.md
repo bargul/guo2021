@@ -57,13 +57,20 @@ Lastly they introduce the logit compensation term for the classificaiton loss in
 
 ## 2.1. The original method
 
-@TODO: Explain the original method.
-- Creating long tailed dataset from Pascal Voc and Ms Coco
+- Creating long tailed dataset from Pascal Voc and Ms Coco with Pareto distribution.
+- Creating a Network, the shared bottom network is the conventional ResNet50 excluding the last stage. 
+- For Subnet-U and Subnet-R, author states that first include an identical copy of the last stage of ResNet,After that, a linear classifier in the form of a fully connected layer is added to each branch.
+- Conventional Classification Loss, Logit Compensation and Logit Consistency between Branches is used as loss function.
+- Run inference for each input test image, the predictions of two branches are averaged as the final prediction result.
+
 ## 2.2. Our interpretation 
 
-@TODO: Explain the parts that were not clearly explained in the original paper and how you interpreted them.
 - Creating Long tailed dataset part is only explained with a sentence Pareto distribution used, we follow the references but could not found the exact way so we use the 6-6-8 split which explained in papers with 4-20 , 20-100 and 100-775 image sample intervals. 
-- 
+- We use Resnet50 Imagenet Pretrained model from torchvision model zoo, we are not sure that if its the same pretrained values. We split the network from last stage and try to create 2 subnet model from the excluding stage , to produce 20 class 1-hot vector we added linear layer with sigmoid activation layer.
+- We used nn.BCEWithLogitsLoss() for Conventional Classification Loss and nn.MSELoss() for Logit Consistency. It is not explained clearly that how the uniform and resampled data will feed the system. What is the order ? The subnet interaction between each other were unclear. The interaction at the subnet among the net input from backbone, the and the output were unclear.
+- For testing only one of the subnets (i.e Subnet-U) was only the respective subnet trained or was all the system trained then only the respective subnet used? We trained only respective subnet.
+- Some parameters werw given but many were missing such as batch size, training epochs. We did not know if the mean substraction and normalized were applied? 
+- The usage of validation set was unclear. We don't know how they used it , we split our training set as %90-%10.
 
 # 3. Experiments and results
 
@@ -71,6 +78,8 @@ Lastly they introduce the logit compensation term for the classificaiton loss in
 
 @TODO: Describe the setup of the original paper and whether you changed any settings.\
 Original paper used Pytorch 1.4.0 version but we used 1.12.0 .\
+We use Pascal Voc 2012 as training and validation set , Pascal Voc 2007 as test set.
+We create the network by changing the structure of Resnet50 model as stated in paper.
 We tried to follow the same procedure while preparing Long Tailed dataset but our set is different inevitably.
 
 ## 3.2. Running the code
@@ -131,6 +140,8 @@ All the parameters can be found in configuration.py file. After setting paremete
 @TODO: Present your results and compare them to the original paper. Please number your figures & tables as if this is a paper.
 
 # 4. Conclusion
+
+We could't reach the succesfull result as paper does. Main reason could be the dataset conversion to LT . Head classes can be found but medium and tail classes are not accurate as head classes.
 
 @TODO: Discuss the paper in relation to the results in the paper and your results.
 
