@@ -22,12 +22,16 @@ The paper is published in CVPR2021 and achieves state of the art results. On top
 @TODO: Explain the original method.
 - Creating long tailed dataset from Pascal Voc and Ms Coco with Pareto distribution.
 - Creating a Network, the shared bottom network is the conventional ResNet50 excluding the last stage. 
-- For Subnet-U and Subnet-R, author states that first include an identical copy of the last stage of ResNet,After that, a linear classifier in the form of a fully connected layer is added to each branch,
+- For Subnet-U and Subnet-R, author states that first include an identical copy of the last stage of ResNet,After that, a linear classifier in the form of a fully connected layer is added to each branch.
+- Conventional Classification Loss, Logit Compensation and Logit Consistency between Branches is used as loss function.
+- Run inference for each input test image, the predictions of two branches are averaged as the final prediction result.
+
 ## 2.2. Our interpretation 
 
 @TODO: Explain the parts that were not clearly explained in the original paper and how you interpreted them.
 - Creating Long tailed dataset part is only explained with a sentence Pareto distribution used, we follow the references but could not found the exact way so we use the 6-6-8 split which explained in papers with 4-20 , 20-100 and 100-775 image sample intervals. 
-- We use Resnet50 Imagenet Pretrained model from torchvision model zoo, we are not sure that if its the same pretrained values. We split the network from last stage and try to create 2 subnet model from the excluding stage , to produce 20 class 1-hot vector we added linear layer with sigmoid activation layer.   
+- We use Resnet50 Imagenet Pretrained model from torchvision model zoo, we are not sure that if its the same pretrained values. We split the network from last stage and try to create 2 subnet model from the excluding stage , to produce 20 class 1-hot vector we added linear layer with sigmoid activation layer.
+- We used nn.BCEWithLogitsLoss() for Conventional Classification Loss and nn.MSELoss() for Logit Consistency. It is not explained clearly that how the uniform and resampled data will feed the system. What is the order ?BARANBARANBARAN????
 
 # 3. Experiments and results
 
