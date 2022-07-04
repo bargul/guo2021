@@ -43,11 +43,26 @@ Using the different samplings and the developing a two-branch network together w
   <img src="readme/img6.png">
 </p>
 <p align="center">
-  Figure 3
+  Table 1
 </p>
 
-Lastly they introduce the logit compensation term for the classificaiton loss in 
+Lastly they introduce the logit compensation term for the classification loss (Lcls) in Equation 1. The paper explains the need as: "when using the weighted sigmoid cross entropy loss for classification, the imbalance between the numbers of positive and negative samples in each class could push their unbounded logit values away from zero with different distances, leading to class-specific over-fitting." For the solution they say "we assume that logit output of the network for each label recognition conforms to a normal distribution" and they simply enforce this. 
 
+<p align="center">
+  <img src="readme/img7.png">
+</p>
+<p align="center">
+  Equation 2
+</p>
+
+The ablation results table which shows the indivual componets' effects show that logit compensation provides the least amount of gain of the introduced methods. Taking into consideration the main claim of this paper, we think this component is the least important among the methods introduced by this paper.
+
+<p align="center">
+  <img src="readme/img3.png">
+</p>
+<p align="center">
+  Table 1
+</p>
 
 @TODO: Summarize the paper, the method & its contributions in relation with the existing literature.
 
@@ -141,7 +156,7 @@ All the parameters can be found in configuration.py file. After setting paremete
 
 # 4. Conclusion
 
-We could't reach the succesfull result as paper does. Main reason could be the dataset conversion to LT . Head classes can be found but medium and tail classes are not accurate as head classes.
+we obtained some results, however we couldn't prove paper's point. We have several thoughts on what might be the cause. Head classes' performance okey but medium and tail classes are not as well as they are supposed to be. Obviously long tailed distribution is a challenging problem. 
 
 @TODO: Discuss the paper in relation to the results in the paper and your results.
 
@@ -156,7 +171,10 @@ We could't reach the succesfull result as paper does. Main reason could be the d
 
 # Contact
 
-- Baran Gülmez \
-baran.gulmez07@gmail.com
-- Ibrahim Koc \
-iibrahimkoc@gmail.com
+- Baran Gulmez\
+baran.gulmez07@gmail.com\
+[Linkedin](https://www.linkedin.com/in/baran-gulmez/) 
+- Ibrahim Koc\
+iibrahimkoc@gmail.com\
+[Linkedin](https://www.linkedin.com/in/ibrahim-koc-swe/) 
+
