@@ -30,7 +30,21 @@ Re-balanced sampling can improve performance of tail classes but hurts the perfo
 
 The loss equation is given in equation 1. First and second terms at the right hand side of the equation are for Subnet-U and Subnet-R's classification outputs. The classification loss (Lcls) is simply a binary cross-entropy based classification loss. The losses in the hyper parameter λ(lambda) is are consistency losses. These losses are calculated using the dashed lines in Figure 2. The consistency losses on the cross-branches enforce the the subnets' outputs to be similar. 
 
-Using the different samplings and the developing a two-branch network together with a cross-branch loss to enforce consistenc is this paper's contribution. The paper's most important claim is to improve tail classes' performance without hurting head classes' performance. As can be seen in below 
+<p align="center">
+  <img src="readme/img5.png">
+</p>
+<p align="center">
+  Equation 1
+</p>
+
+Using the different samplings and the developing a two-branch network together with a cross-branch loss to enforce consistenc is this paper's contribution. The paper's most important claim is to improve tail classes' performance without hurting head classes' performance. As can be seen in below table this claim is true and other papers can't achieve this. 
+
+<p align="center">
+  <img src="readme/img6.png">
+</p>
+<p align="center">
+  Figure 3
+</p>
 
 Lastly they introduce the logit compensation term for the classificaiton loss in 
 
