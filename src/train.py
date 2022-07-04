@@ -1,5 +1,5 @@
 from configuration import *
-from voc_dataset import *
+from VocDataset import *
 from ClassAwareSampler import *
 from Network import *
 from apmeter import *
@@ -23,6 +23,7 @@ training_data = VOC(root=lt_dataset_output_path, imgtransform=transform_train)
 
 test_data = VOC(root=test_dataset_output_path, imgtransform=transform_train)
 testLoader = DataLoader(test_data, batch_size=test_batch_size, shuffle=False)
+
 
 def splitDataset(training_data, validation_set_ratio):
   train_count = int(len(training_data)*(1-validation_set_ratio))
@@ -86,22 +87,8 @@ def F1_score(prob, label):
     F1scr = 2 * precision * recall / (precision + recall + epsilon)
     return precision, recall, F1scr
 
-def calcLoss(uniform_dataloader, rebalanced_dataloader):
-  xU, yU = next(iter(uniform_dataloader))
-  xR, yR = next(iter(rebalanced_dataloader))
-
-  loss = torch.tensor([0.0], device = dev)
-  if uniform_branch_active:
-    u , uHat = net(xU)
-    loss += Lcls(u,yU)
-  if resampled_branch_active:
-    rHat , r = net(xR)
-    loss += Lcls(r,yR)
-  if uniform_branch_active and resampled_branch_active and logit_consistency:
-    loss +=lambda_ * ( Lcon(u,uHat) + Lcon(r,rHat))
-  return loss, u , r, uHat, rHat, xU, yU, xR, yR
-
-def runOnDataset(dataloader,net,name,colour="blue"):
+def runOnDataset(dataloader,name,colour="blue"):
+  global net
   iterations = int(len(dataloader) / batch_size_)
   counter = 0
   precision = 0
@@ -111,7 +98,7 @@ def runOnDataset(dataloader,net,name,colour="blue"):
   pred_raw_all = np.ndarray([0,len(labels_map)])
   pred_all = np.ndarray([0,len(labels_map)])
   y_all = np.ndarray([0,len(labels_map)])
-  for i in tqdm(range(iterations), desc=name, colour=colour):
+  for i in tqdm(range(len(dataloader)), desc=name, colour=colour):
     counter+= 1
     x, y = next(iter(dataloader))
     y_all = np.concatenate((y_all, y.cpu().detach().numpy()))
@@ -148,31 +135,45 @@ while patience < patience_level:
   epoch_counter += 1
   avg_loss_iters = 0
   ##########  Train #############
-  for i in tqdm(range(total_iterations), desc="train", colour='green'):
-      net.train()
+  net.train()
+  for i in tqdm(range(len(uniform_dataloader)), desc="train", colour='green'):
       batch_counter += 1
       optimizer.zero_grad()
-      loss, u, r, uHat, rHat, xU, yU, xR, yR = calcLoss(uniform_dataloader, rebalanced_dataloader)
+
+      xU, yU = next(iter(uniform_dataloader))
+      xR, yR = next(iter(rebalanced_dataloader))
+
+      loss = torch.tensor([0.0], device = dev)
+      if uniform_branch_active:
+        u , uHat = net(xU)
+        loss += Lcls(u,yU)
+      if resampled_branch_active:
+        rHat , r = net(xR)
+        loss += Lcls(r,yR)
+      if uniform_branch_active and resampled_branch_active and logit_consistency:
+        loss +=lambda_ * ( Lcon(u,uHat) + Lcon(r,rHat))
+
       avg_loss_iters += loss.item()
       loss.backward()
       optimizer.step()
+      avg_loss_iters += loss.item()
       writer.add_scalar("Training/loss", loss, batch_counter)
 
-      uniform_result = (u>threshold).float()
-      uniform_precision, uniform_recall, uniform_F1scr = F1_score(yU, uniform_result)
+      if uniform_branch_active:
+        uniform_result = (u>threshold).float()
+        uniform_precision, uniform_recall, uniform_F1scr = F1_score(yU, uniform_result)
+        writer.add_scalar("Training/uniform/precision", uniform_precision, batch_counter)
+        writer.add_scalar("Training/uniform/recall", uniform_recall, batch_counter)
+        writer.add_scalar("Training/uniform/F1scr", uniform_F1scr, batch_counter)
 
-      resampled_result = (r>threshold).float()
-      resampled_precision, resampled_recall, resampled_F1scr = F1_score(yR, resampled_result)
+      if resampled_branch_active:
+        resampled_result = (r>threshold).float()
+        resampled_precision, resampled_recall, resampled_F1scr = F1_score(yR, resampled_result)
+        writer.add_scalar("Training/resampled/precision", resampled_precision, batch_counter)
+        writer.add_scalar("Training/resampled/recall", resampled_recall, batch_counter)
+        writer.add_scalar("Training/resampled/F1scr", resampled_F1scr, batch_counter)
 
-      writer.add_scalar("Training/uniform/precision", uniform_precision, batch_counter)
-      writer.add_scalar("Training/uniform/recall", uniform_recall, batch_counter)
-      writer.add_scalar("Training/uniform/F1scr", uniform_F1scr, batch_counter)
-
-      writer.add_scalar("Training/resampled/precision", resampled_precision, batch_counter)
-      writer.add_scalar("Training/resampled/recall", resampled_recall, batch_counter)
-      writer.add_scalar("Training/resampled/F1scr", resampled_F1scr, batch_counter)
-
-      if batch_counter % 20 == 0:
+      if batch_counter % 40 == 0:
         ##########  Validation #############
         precision_val,recall_val,F1scr_val, pred_raw_all_val, pred_all_val, y_all_val = runOnDataset(uniform_dataloader_val,net,"val")          
         writer.add_scalar("Validation/precision", precision_val, batch_counter)
@@ -195,9 +196,6 @@ while patience < patience_level:
         mAP_test_cls = apm_val.value().cpu().detach().numpy()
         mAP_test = mAP_test_cls.mean()
 
-
-  avg_loss_iters = avg_loss_iters / total_iterations
-  writer.add_scalar("Training/avg_loss", avg_loss_iters, epoch_counter)
    
   '''
   if F1scr_val_new > F1scr_val:

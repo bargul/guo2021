@@ -31,7 +31,47 @@ Uniform and Re-balanced Samplings
 
 ## 3.2. Running the code
 
-@TODO: Explain your code & directory structure and how other people can run it.
+@TODO: Explain your code & directory structure and how other people can run it. \
+We used 
+
+You can find our version of Long tailed Voc Dataset with these links. \
+[Pascal VOC]([http://host.robots.ox.ac.uk/pascal/VOC/](http://host.robots.ox.ac.uk/pascal/VOC/)) \
+[dataset_voc_test.zip]([https://drive.google.com/file/d/14zlzl8V-gI7f9hAlLgcZgoYSK9TJdBD7/view?usp=sharing](https://drive.google.com/file/d/14zlzl8V-gI7f9hAlLgcZgoYSK9TJdBD7/view?usp=sharing)) \
+[dataset_voc_lt.zip]([https://drive.google.com/file/d/135dGh0ti0vvIbWeePVN66UQvkX8DKJAr/view?usp=sharing](https://drive.google.com/file/d/135dGh0ti0vvIbWeePVN66UQvkX8DKJAr/view?usp=sharing)) 
+
+├── dataset_org\
+│   ├── VOCtest_06-Nov-2007.tar\
+│   ├── VOCtest_06-Nov-2007\
+│   └── VOCtrainval_11-May-2012.tar\
+│   ├── VOCtrainval_11-May-2012\
+├── dataset_voc_lt\
+│   ├── dataset_voc_lt.zip\
+│   ├── images\
+│   └── labels\
+│   ├── info.txt\
+├── dataset_voc_test\
+│   ├── dataset_voc_test.zip\
+│   ├── images\
+│   └── labels\
+│   ├── info.txt\
+├── src\
+│   ├── ClassAwareSampler.py\
+│   ├── configuration.py\
+│   ├── createLongTailedDataset.py\
+│   ├── createTestDataset.py\
+│   ├── mean_ap.py\
+│   ├── Network.py\
+│   ├── test.py\
+│   ├── train.py\
+│   ├── VocDataset.py\
+│   └── weights\
+├── runs\
+│   ├── 1656888576_only_uniform\
+│   ├── 1656888901_only_rebalanced\
+│   ├── 1656889605\
+│   └── 1656889821\
+├── dockerCommands.txt\
+├── README.md\
 
 ## 3.3. Results
 
@@ -42,9 +82,14 @@ Uniform and Re-balanced Samplings
 @TODO: Discuss the paper in relation to the results in the paper and your results.
 
 # 5. References
-
-@TODO: Provide your references here.
+- Network.py - https://deci.ai/blog/measure-inference-time-deep-neural-networks/
+- ClassAwareSampler.py - https://github.com/open-mmlab/mmdetection 
+- VocDataset.py - https://github.com/andrewssobral/deep-learning-pytorch/blob/master/segmentation/utils/dataset.py
+- train.py - https://discuss.pytorch.org/t/is-there-any-nice-pre-defined-function-to-calculate-precision-recall-and-f1-score-for-multi-class-multilabel-classification/103353
 
 # Contact
 
-@TODO: Provide your names & email addresses and any other info with which people can contact you.
+- Baran Gülmez \
+baran.gulmez07@gmail.com
+- Ibrahim Koc \
+iibrahimkoc@gmail.com
