@@ -20,26 +20,39 @@ The paper is published in CVPR2021 and achieves state of the art results. On top
 ## 2.1. The original method
 
 @TODO: Explain the original method.
-
+- Creating long tailed dataset from Pascal Voc and Ms Coco
 ## 2.2. Our interpretation 
 
 @TODO: Explain the parts that were not clearly explained in the original paper and how you interpreted them.
+- Creating Long tailed dataset part is only explained with a sentence Pareto distribution used, we follow the references but could not found the exact way so we use the 6-6-8 split which explained in papers with 4-20 , 20-100 and 100-775 image sample intervals. 
+- 
 
 # 3. Experiments and results
 
 ## 3.1. Experimental setup
 
-@TODO: Describe the setup of the original paper and whether you changed any settings.
+@TODO: Describe the setup of the original paper and whether you changed any settings.\
+Original paper used Pytorch 1.4.0 version but we used 1.12.0 .\
+We tried to follow the same procedure while preparing Long Tailed dataset but our set is different inevitably.
 
 ## 3.2. Running the code
-
-@TODO: Explain your code & directory structure and how other people can run it. \
-We used 
 
 You can find our version of Long tailed Voc Dataset with these links. \
 [Pascal VOC]([http://host.robots.ox.ac.uk/pascal/VOC/](http://host.robots.ox.ac.uk/pascal/VOC/)) \
 [dataset_voc_test.zip]([https://drive.google.com/file/d/14zlzl8V-gI7f9hAlLgcZgoYSK9TJdBD7/view?usp=sharing](https://drive.google.com/file/d/14zlzl8V-gI7f9hAlLgcZgoYSK9TJdBD7/view?usp=sharing)) \
 [dataset_voc_lt.zip]([https://drive.google.com/file/d/135dGh0ti0vvIbWeePVN66UQvkX8DKJAr/view?usp=sharing](https://drive.google.com/file/d/135dGh0ti0vvIbWeePVN66UQvkX8DKJAr/view?usp=sharing)) 
+
+We used docker container with Pytorch 1.12.0 , Python 3.7.13 on Ubuntu 18.04 Desktop Pc. You can pull the latest docker image with these commands. \
+`docker pull pytorch/pytorch:latest`  
+`docker run --gpus all -v /guo2021:/guo2021 -w /guo2021 -it pytorch/pytorch:latest`
+
+You can directly use our dataset.zip files by extracting them to dataset_voc_lt and dataset_voc_test or you can create your own version with \
+`python src/createLongTailedDataset.py` \
+`python src/createTestDataset.py`\
+All the parameters can be found in configuration.py file. After setting paremeters properly you can directly run train.py file to start training. \
+`python src/train.py` This code will store weight files in src/weight folder, you can use them later for testing. \
+`python src/test.py` This code will run the test set.
+
 
 ├── dataset_org\
 │   ├── VOCtest_06-Nov-2007.tar\
