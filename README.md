@@ -7,11 +7,13 @@ This readme file is an outcome of the [CENG502 (Spring 2022)](https://ceng.metu.
 The paper : Long-Tailed Multi-Label Visual Recognition by Collaborative Training on
 Uniform and Re-balanced Samplings 
 
-@TODO: Introduce the paper (inc. where it is published) and describe your goal (reproducibility).
+The paper is published in CVPR2021 and achieves state of the art results. On top of achieving state of the art results they actually develop a novel method. Our goal is to reproduce authors' results in the same way they did. They simply and judiciously add one of their novelties at a time and show its indiviual contribution. So our goal is to reproduce the table in img4 by adding one method at a time. Even if we can't get numerically close results to the paper's we would like to similar effects of each proposed method's addition. 
 
 ## 1.1. Paper summary
 
 @TODO: Summarize the paper, the method & its contributions in relation with the existing literature.
+
+
 
 # 2. The method and my interpretation
 
